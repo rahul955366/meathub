@@ -1,0 +1,78 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: http://auth-service:8081
+          predicates:
+            - Path=/auth/**
+
+        - id: user-service
+          uri: http://user-service:8082
+          predicates:
+            - Path=/users/**
+          filters:
+            - JwtAuthenticationFilter
+
+        - id: butcher-service
+          uri: http://butcher-service:8083
+          predicates:
+            - Path=/butchers/**
+          filters:
+            - JwtAuthenticationFilter
+
+        - id: order-service
+          uri: http://order-service:8084
+          predicates:
+            - Path=/orders/**
+          filters:
+            - JwtAuthenticationFilter
+
+        - id: subscription-service
+          uri: http://subscription-service:8085
+          predicates:
+            - Path=/subscriptions/**
+          filters:
+            - JwtAuthenticationFilter
+
+        - id: delivery-service
+          uri: http://delivery-service:8086
+          predicates:
+            - Path=/deliveries/**
+          filters:
+            - JwtAuthenticationFilter
+
+        - id: gym-service
+          uri: http://gym-service:8087
+          predicates:
+            - Path=/gym/**
+          filters:
+            - JwtAuthenticationFilter
+
+        - id: pet-service
+          uri: http://pet-service:8088
+          predicates:
+            - Path=/pet/**
+          filters:
+            - JwtAuthenticationFilter
+            
+        - id: media-service
+          uri: http://media-service:8089
+          predicates:
+            - Path=/media/**
+          filters:
+            - JwtAuthenticationFilter
+            
+        - id: admin-service
+          uri: http://admin-service:8090
+          predicates:
+            - Path=/admin/**
+          filters:
+            - JwtAuthenticationFilter
+            
+        - id: notification-service
+          uri: http://notification-service:8091
+          predicates:
+            - Path=/notifications/**
+          filters:
+            - JwtAuthenticationFilter

@@ -1,0 +1,684 @@
+Starting compilation of 14 services... 
+-------------------------------------------------- 
+Building api-gateway... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.meatup:api-gateway >-----------------------
+[INFO] Building api-gateway 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ api-gateway ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\api-gateway\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ api-gateway ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ api-gateway ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 4 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ api-gateway ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\api-gateway\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ api-gateway ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ api-gateway ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ api-gateway ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\api-gateway\target\api-gateway-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ api-gateway ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\api-gateway\target\api-gateway-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\api-gateway\target\api-gateway-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  7.727 s
+[INFO] Finished at: 2025-12-16T22:17:20+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: api-gateway 
+-------------------------------------------------- 
+Building auth-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.meathub:auth-service >----------------------
+[INFO] Building auth-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ auth-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\auth-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ auth-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ auth-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 18 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ auth-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\auth-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ auth-service ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 1 source file with javac [debug release 17] to target\test-classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ auth-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ auth-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\auth-service\target\auth-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ auth-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\auth-service\target\auth-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\auth-service\target\auth-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  10.299 s
+[INFO] Finished at: 2025-12-16T22:17:33+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: auth-service 
+-------------------------------------------------- 
+Building user-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.meathub:user-service >----------------------
+[INFO] Building user-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ user-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\user-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ user-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ user-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 21 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ user-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\user-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ user-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ user-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ user-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\user-service\target\user-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ user-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\user-service\target\user-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\user-service\target\user-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  10.768 s
+[INFO] Finished at: 2025-12-16T22:17:46+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: user-service 
+-------------------------------------------------- 
+Building butcher-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< com.meathub:butcher-service >---------------------
+[INFO] Building butcher-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ butcher-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\butcher-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ butcher-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ butcher-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 25 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] /C:/Users/sango/OneDrive/Desktop/myProject_MEAT/butcher-service/src/main/java/com/meathub/butcher/security/JwtService.java: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\butcher-service\src\main\java\com\meathub\butcher\security\JwtService.java uses unchecked or unsafe operations.
+[INFO] /C:/Users/sango/OneDrive/Desktop/myProject_MEAT/butcher-service/src/main/java/com/meathub/butcher/security/JwtService.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ butcher-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\butcher-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ butcher-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ butcher-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ butcher-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\butcher-service\target\butcher-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ butcher-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\butcher-service\target\butcher-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\butcher-service\target\butcher-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  8.975 s
+[INFO] Finished at: 2025-12-16T22:17:57+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: butcher-service 
+-------------------------------------------------- 
+Building order-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.meathub:order-service >----------------------
+[INFO] Building order-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ order-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\order-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ order-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ order-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 34 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ order-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\order-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ order-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ order-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ order-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\order-service\target\order-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ order-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\order-service\target\order-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\order-service\target\order-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  8.914 s
+[INFO] Finished at: 2025-12-16T22:18:08+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: order-service 
+-------------------------------------------------- 
+Building subscription-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------< com.meatup:subscription-service >-------------------
+[INFO] Building subscription-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ subscription-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\subscription-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ subscription-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ subscription-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 16 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ subscription-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\subscription-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ subscription-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ subscription-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ subscription-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\subscription-service\target\subscription-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ subscription-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\subscription-service\target\subscription-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\subscription-service\target\subscription-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  9.958 s
+[INFO] Finished at: 2025-12-16T22:18:20+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: subscription-service 
+-------------------------------------------------- 
+Building delivery-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< com.meatup:delivery-service >---------------------
+[INFO] Building delivery-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ delivery-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\delivery-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ delivery-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ delivery-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 25 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ delivery-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\delivery-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ delivery-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ delivery-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ delivery-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\delivery-service\target\delivery-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ delivery-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\delivery-service\target\delivery-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\delivery-service\target\delivery-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  10.080 s
+[INFO] Finished at: 2025-12-16T22:18:32+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: delivery-service 
+-------------------------------------------------- 
+Building gym-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.meatup:gym-service >-----------------------
+[INFO] Building gym-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ gym-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\gym-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ gym-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ gym-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 17 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ gym-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\gym-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ gym-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ gym-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ gym-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\gym-service\target\gym-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ gym-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\gym-service\target\gym-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\gym-service\target\gym-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  9.374 s
+[INFO] Finished at: 2025-12-16T22:18:44+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: gym-service 
+-------------------------------------------------- 
+Building pet-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.meatup:pet-service >-----------------------
+[INFO] Building pet-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ pet-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\pet-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ pet-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ pet-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 22 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ pet-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\pet-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ pet-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ pet-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ pet-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\pet-service\target\pet-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ pet-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\pet-service\target\pet-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\pet-service\target\pet-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  10.013 s
+[INFO] Finished at: 2025-12-16T22:18:56+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: pet-service 
+-------------------------------------------------- 
+Building media-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.meatup:media-service >----------------------
+[INFO] Building media-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ media-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\media-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ media-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ media-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 15 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ media-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\media-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ media-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ media-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ media-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\media-service\target\media-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ media-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\media-service\target\media-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\media-service\target\media-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  8.646 s
+[INFO] Finished at: 2025-12-16T22:19:07+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: media-service 
+-------------------------------------------------- 
+Building admin-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.meatup:admin-service >----------------------
+[INFO] Building admin-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ admin-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\admin-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ admin-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ admin-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 12 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ admin-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\admin-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ admin-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ admin-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ admin-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\admin-service\target\admin-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ admin-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\admin-service\target\admin-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\admin-service\target\admin-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  8.539 s
+[INFO] Finished at: 2025-12-16T22:19:17+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: admin-service 
+-------------------------------------------------- 
+Building notification-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ------------------< com.meatup:notification-service >-------------------
+[INFO] Building notification-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ notification-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\notification-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ notification-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ notification-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 15 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ notification-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\notification-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ notification-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ notification-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ notification-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\notification-service\target\notification-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ notification-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\notification-service\target\notification-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\notification-service\target\notification-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  9.176 s
+[INFO] Finished at: 2025-12-16T22:19:29+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: notification-service 
+-------------------------------------------------- 
+Building ai-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------------< com.meatup:ai-service >------------------------
+[INFO] Building ai-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ ai-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\ai-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ ai-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ ai-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 12 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ ai-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\ai-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ ai-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ ai-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ ai-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\ai-service\target\ai-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ ai-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\ai-service\target\ai-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\ai-service\target\ai-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  10.002 s
+[INFO] Finished at: 2025-12-16T22:19:41+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: ai-service 
+-------------------------------------------------- 
+Building blockchain-service... 
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -------------------< com.meatup:blockchain-service >--------------------
+[INFO] Building blockchain-service 1.0.0
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- maven-clean-plugin:3.3.2:clean (default-clean) @ blockchain-service ---
+[INFO] Deleting C:\Users\sango\OneDrive\Desktop\myProject_MEAT\blockchain-service\target
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:resources (default-resources) @ blockchain-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:compile (default-compile) @ blockchain-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 11 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- maven-resources-plugin:3.3.1:testResources (default-testResources) @ blockchain-service ---
+[INFO] skip non existing resourceDirectory C:\Users\sango\OneDrive\Desktop\myProject_MEAT\blockchain-service\src\test\resources
+[INFO] 
+[INFO] --- maven-compiler-plugin:3.11.0:testCompile (default-testCompile) @ blockchain-service ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- maven-surefire-plugin:3.1.2:test (default-test) @ blockchain-service ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- maven-jar-plugin:3.3.0:jar (default-jar) @ blockchain-service ---
+[INFO] Building jar: C:\Users\sango\OneDrive\Desktop\myProject_MEAT\blockchain-service\target\blockchain-service-1.0.0.jar
+[INFO] 
+[INFO] --- spring-boot-maven-plugin:3.2.0:repackage (repackage) @ blockchain-service ---
+[INFO] Replacing main artifact C:\Users\sango\OneDrive\Desktop\myProject_MEAT\blockchain-service\target\blockchain-service-1.0.0.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to C:\Users\sango\OneDrive\Desktop\myProject_MEAT\blockchain-service\target\blockchain-service-1.0.0.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  9.717 s
+[INFO] Finished at: 2025-12-16T22:19:53+05:30
+[INFO] ------------------------------------------------------------------------
+SUCCESS: blockchain-service 
+Done. 

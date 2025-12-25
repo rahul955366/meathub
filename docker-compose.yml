@@ -1,0 +1,228 @@
+version: '3.8'
+
+services:
+  # Shared Database
+  mysql:
+    image: mysql:8.0
+    container_name: meathub-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+    ports:
+      - "3307:3306" # Mapped to 3307 on host to avoid conflict with your local MySQL
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - meathub-net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 1. Auth Service
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_auth?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 2. User Service
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_user?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 3. Butcher Service
+  butcher-service:
+    build: ./butcher-service
+    container_name: butcher-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_butcher?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 4. Order Service
+  order-service:
+    build: ./order-service
+    container_name: order-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_order?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 5. Subscription Service
+  subscription-service:
+    build: ./subscription-service
+    container_name: subscription-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_subscription?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 6. Delivery Service
+  delivery-service:
+    build: ./delivery-service
+    container_name: delivery-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_delivery?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 7. Gym Service
+  gym-service:
+    build: ./gym-service
+    container_name: gym-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_gym?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 8. Pet Service
+  pet-service:
+    build: ./pet-service
+    container_name: pet-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_pet?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 9. Media Service
+  media-service:
+    build: ./media-service
+    container_name: media-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_media?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 10. Admin Service
+  admin-service:
+    build: ./admin-service
+    container_name: admin-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_admin?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 11. Notification Service
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_notification?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 12. AI Service
+  ai-service:
+    build: ./ai-service
+    container_name: ai-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_ai?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+      # Gateway URL needs to point to the container in Docker network
+      GATEWAY_URL: http://api-gateway:8080
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 13. Blockchain Service
+  blockchain-service:
+    build: ./blockchain-service
+    container_name: blockchain-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/meathub_blockchain?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 1234
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - meathub-net
+
+  # 14. API Gateway (The Entry Point)
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      # Activate the docker profile so it routes request to service names (http://auth-service:8081)
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      - auth-service
+      - user-service
+      - order-service
+    networks:
+      - meathub-net
+
+networks:
+  meathub-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
