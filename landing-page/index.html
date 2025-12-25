@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeatHub - Hyperlocal Meat Marketplace</title>
+    <meta name="description"
+        content="A hyperlocal meat marketplace built on trust. Connecting customers directly with local butchers.">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --warm-brown: #8b4513;
+            --light-cream: #faf8f3;
+            --dark-text: #2c2c2c;
+            --muted-text: #666;
+            --border-light: #e0e0e0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+            line-height: 1.6;
+            color: var(--dark-text);
+            background: var(--light-cream);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            border-bottom: 1px solid var(--border-light);
+            padding: 24px 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--warm-brown);
+            text-decoration: none;
+        }
+
+        nav a {
+            color: var(--muted-text);
+            text-decoration: none;
+            margin-left: 32px;
+            font-size: 15px;
+        }
+
+        nav a:hover {
+            color: var(--dark-text);
+        }
+
+        /* Hero */
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            font-size: 13px;
+            color: var(--muted-text);
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .subtext {
+            font-size: 18px;
+            color: var(--muted-text);
+            max-width: 650px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        /* Section */
+        section {
+            padding: 60px 0;
+            border-top: 1px solid var(--border-light);
+        }
+
+        h2 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--dark-text);
+        }
+
+        p {
+            font-size: 16px;
+            color: var(--muted-text);
+            margin-bottom: 16px;
+        }
+
+        /* Features List */
+        .features {
+            list-style: none;
+            margin-top: 24px;
+        }
+
+        .features li {
+            padding: 12px 0;
+            font-size: 16px;
+            color: var(--dark-text);
+            display: flex;
+            align-items: baseline;
+        }
+
+        .features li:before {
+            content: "•";
+            color: var(--warm-brown);
+            font-weight: bold;
+            margin-right: 12px;
+        }
+
+        /* Status Grid */
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .status-item {
+            padding: 20px;
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+        }
+
+        .status-item h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted-text);
+            margin-bottom: 8px;
+        }
+
+        .status-item p {
+            font-size: 16px;
+            color: var(--dark-text);
+            margin: 0;
+        }
+
+        /* Contact */
+        .contact-section {
+            text-align: center;
+            padding: 80px 0;
+        }
+
+        .contact-email {
+            font-size: 20px;
+            color: var(--warm-brown);
+            text-decoration: none;
+            border-bottom: 1px solid var(--warm-brown);
+            padding-bottom: 2px;
+        }
+
+        .contact-email:hover {
+            opacity: 0.8;
+        }
+
+        /* Footer */
+        footer {
+            background: white;
+            border-top: 1px solid var(--border-light);
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        footer p {
+            font-size: 14px;
+            color: var(--muted-text);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 32px;
+            }
+
+            .subtext {
+                font-size: 16px;
+            }
+
+            nav a {
+                margin-left: 20px;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero {
+                padding: 60px 0 40px;
+            }
+
+            section {
+                padding: 40px 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="logo">MeatHub</a>
+                <nav>
+                    <a href="#about">About</a>
+                    <a href="#features">Features</a>
+                    <a href="#contact">Contact</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="container">
+            <span class="badge">Private beta • In development</span>
+            <h1>A hyperlocal meat marketplace built on trust.</h1>
+            <p class="subtext">
+                MeatHub connects customers directly with trusted local butchers,
+                subscriptions, and delivery — built with a scalable microservice architecture.
+            </p>
+        </div>
+    </div>
+
+    <!-- What is MeatHub -->
+    <section id="about">
+        <div class="container">
+            <h2>What MeatHub is</h2>
+            <p>
+                MeatHub is a hyperlocal marketplace that connects customers with verified local butchers.
+                We enable direct ordering, transparent sourcing, and flexible delivery options.
+            </p>
+            <p>
+                The platform supports multiple use cases: regular household orders, gym protein packages,
+                pet meat subscriptions, and B2B partnerships. Customers can choose their preferred butcher,
+                view preparation through video transparency, and manage recurring deliveries.
+            </p>
+            <p>
+                Built on a modern microservice architecture, the system uses AI to enhance user experience
+                and optimize inventory management, with blockchain integration for supply chain traceability.
+            </p>
+        </div>
+    </section>
+
+    <!-- Why it's different -->
+    <section id="features">
+        <div class="container">
+            <h2>Why it's different</h2>
+            <ul class="features">
+                <li>Choose your butcher — transparency in who prepares your order</li>
+                <li>Transparency-first approach — optional video proof of preparation</li>
+                <li>Subscription-based delivery — recurring orders for households, gyms, pets, and businesses</li>
+                <li>Zero-waste model — pet meat utilizes portions typically discarded</li>
+                <li>Scalable backend architecture — microservices with API gateway</li>
+                <li>AI-assisted ordering & tracking — smart recommendations and inventory forecasting</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Current Status -->
+    <section>
+        <div class="container">
+            <h2>Current status</h2>
+            <div class="status-grid">
+                <div class="status-item">
+                    <h3>Backend</h3>
+                    <p>Microservices architecture implemented with API gateway</p>
+                </div>
+                <div class="status-item">
+                    <h3>Frontend</h3>
+                    <p>Multi-portal system (customer, admin, butcher) in development</p>
+                </div>
+                <div class="status-item">
+                    <h3>AI & Blockchain</h3>
+                    <p>Core integrations complete, expanding capabilities</p>
+                </div>
+                <div class="status-item">
+                    <h3>Stage</h3>
+                    <p>Early MVP / Private beta testing</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <p style="font-size: 20px; margin-bottom: 20px;">Interested in learning more?</p>
+            <a href="mailto:sangojurahulbhargava@gmail.com" class="contact-email">founder@meathub.app</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>© 2024 MeatHub</p>
+            <p style="margin-top: 8px;">This project is under active development.</p>
+        </div>
+    </footer>
+</body>
+
+</html>
