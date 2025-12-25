@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { AIHero } from '../components/ai/AIHero';
 import { ButcherSearchBox } from '../components/butcher/ButcherSearchBox';
+import { FeaturedProductsSection } from '../../components/sections/FeaturedProductsSection';
 import { toast } from 'sonner';
 
 interface HomePageProps {
@@ -188,6 +189,13 @@ export function HomePage({ onNavigate }: HomePageProps) {
           </div>
         </div>
       </section>
+
+      {/* Featured Products - Premium Display */}
+      <FeaturedProductsSection
+        products={products}
+        onProductClick={handleProductClick}
+        onAddToCart={() => { }} // You can add proper cart functionality later
+      />
 
       {/* Main Content - Split Layout */}
       <section className="py-8 md:py-12 bg-background animate-fade-in">
