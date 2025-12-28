@@ -2,3 +2,4 @@
 export * from './PremiumBadge';
 export * from './PremiumButton';
 export * from './PremiumProductCard';
+export * from './CompactProductCard';

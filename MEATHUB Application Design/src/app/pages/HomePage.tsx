@@ -24,6 +24,7 @@ import {
 import { AIHero } from '../components/ai/AIHero';
 import { ButcherSearchBox } from '../components/butcher/ButcherSearchBox';
 import { FeaturedProductsSection } from '../../components/sections/FeaturedProductsSection';
+import { DailyComboSection } from '../../components/sections/DailyComboSection';
 import { toast } from 'sonner';
 
 interface HomePageProps {
@@ -190,12 +191,38 @@ export function HomePage({ onNavigate }: HomePageProps) {
         </div>
       </section>
 
-      {/* Featured Products - Premium Display */}
-      <FeaturedProductsSection
-        products={products}
-        onProductClick={handleProductClick}
-        onAddToCart={() => { }} // You can add proper cart functionality later
-      />
+      {/* DAILY COMBO LUNCH BOXES - 3 Trays Each */}
+      <DailyComboSection />
+
+      {/* PREMIUM PRODUCT SHOWCASE */}
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-5xl font-[family-name:var(--font-heading)] font-bold text-foreground mb-4">
+              Premium Selection
+            </h2>
+            <p className="text-xl text-muted-foreground mb-4">
+              Handpicked finest cuts, delivered fresh to your door
+            </p>
+            <div className="w-24 h-1 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 mx-auto rounded-full"></div>
+          </div>
+
+          {/* Premium Product Cards - Using actual backend products if available, or showing demo */}
+          <FeaturedProductsSection
+            products={products.length > 0 ? products : [
+              // Mock demo products to showcase the premium design
+              { id: '1', name: 'Premium Chicken Breast', description: 'Fresh, tender chicken breast', price: 299, imageUrl: 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=500', category: 'CHICKEN', cutType: 'Boneless', unit: 'kg', inStock: true, tags: [] },
+              { id: '2', name: 'Fresh Mutton Curry Cut', description: 'Premium quality mutton', price: 599, imageUrl: 'https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500', category: 'MUTTON', cutType: 'Curry Cut', unit: 'kg', inStock: true, tags: [] },
+              { id: '3', name: 'Jumbo Prawns', description: 'Ocean fresh jumbo prawns', price: 799, imageUrl: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=500', category: 'PRAWNS', cutType: 'Whole', unit: 'kg', inStock: true, tags: [] },
+              { id: '4', name: 'Tandoori Chicken', description: 'Marinated and ready to cook', price: 349, imageUrl: 'https://images.unsplash.com/photo-1599487488192-e416e2d1fcf2?w=500', category: 'MARINATED', cutType: 'Whole', unit: 'kg', inStock: true, tags: [] },
+              { id: '5', name: 'Fresh Fish Fillet', description: 'Boneless fish fillet', price: 449, imageUrl: 'https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=500', category: 'FISH', cutType: 'Fillet', unit: 'kg', inStock: true, tags: [] },
+              { id: '6', name: 'Chicken Wings', description: 'Perfect for grilling', price: 249, imageUrl: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=500', category: 'CHICKEN', cutType: 'Wings', unit: 'kg', inStock: true, tags: [] },
+            ]}
+            onProductClick={handleProductClick}
+            onAddToCart={() => { }}
+          />
+        </div>
+      </section>
 
       {/* Main Content - Split Layout */}
       <section className="py-8 md:py-12 bg-background animate-fade-in">
