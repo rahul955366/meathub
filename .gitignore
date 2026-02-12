@@ -1,0 +1,77 @@
+# Dependencies
+node_modules/
+*/node_modules/
+target/
+*/target/
+
+# Build outputs
+dist/
+*/dist/
+build/
+*/build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Spring Boot
+*.jar
+*.war
+*.ear
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Error logs
+hs_err_pid*
+error.log
+
+# Package files
+*.tgz
+*.zip
+*.tar.gz
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.npm/
+.eslintcache
+
+# Lock files (optional - some prefer to keep these)
+# package-lock.json
+# pom.xml.lock
+
+# Application specific
+uploads/
+temp/

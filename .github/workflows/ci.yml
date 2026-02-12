@@ -1,0 +1,43 @@
+# MEATHUB CI/CD Pipeline
+# Currently disabled - Backend services are under development
+
+# Uncomment the lines below when backend services are ready for CI/CD
+
+# name: MEATHUB CI/CD Pipeline
+# 
+# on:
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main, develop ]
+# 
+# jobs:
+#   build-frontend:
+#     runs-on: ubuntu-latest
+#     
+#     strategy:
+#       matrix:
+#         portal: [admin-portal, butcher-portal, meatup-frontend]
+#     
+#     steps:
+#       - uses: actions/checkout@v3
+#       
+#       - name: Set up Node.js
+#         uses: actions/setup-node@v3
+#         with:
+#           node-version: '18'
+#           
+#       - name: Cache node modules
+#         uses: actions/cache@v3
+#         with:
+#           path: ~/.npm
+#           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+#           restore-keys: ${{ runner.os }}-node
+#           
+#       - name: Install dependencies
+#         working-directory: ${{ matrix.portal }}
+#         run: npm ci || npm install
+#         
+#       - name: Build
+#         working-directory: ${{ matrix.portal }}
+#         run: npm run build

@@ -1,0 +1,57 @@
+services:
+  db:
+    image: ankane/pgvector:v0.5.1
+    environment:
+      POSTGRES_DB: meathub
+      POSTGRES_USER: meathub_user
+      POSTGRES_PASSWORD: meathub_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - meathub_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://meathub_user:meathub_password@db:5432/meathub
+      - DEBUG=1
+      - SECRET_KEY=django-insecure-meathub-migration-secret
+    depends_on:
+      - db
+    networks:
+      - meathub_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - INTERNAL_API_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - meathub_network
+
+networks:
+  meathub_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
