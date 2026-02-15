@@ -39,7 +39,7 @@ export default function ProductCard({
             <div className="group cursor-pointer" onClick={handleNavigate}>
                 <div className="aspect-[3/4] rounded-[2.5rem] overflow-hidden bg-slate-100 border border-slate-200 relative shadow-sm group-hover:shadow-2xl transition-all duration-700">
                     <img
-                        src={item.image_url || 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=400&q=80'}
+                        src={item.image_url || 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=400&q=80&sig=fallback_card'}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                     />
                     <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-2">
@@ -67,7 +67,7 @@ export default function ProductCard({
         >
             <div className="aspect-square rounded-[2.5rem] overflow-hidden bg-slate-100 mb-6 relative">
                 <img
-                    src={item.image_url || 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=400&q=80'}
+                    src={item.image_url || 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=400&q=80&sig=fallback_card'}
                     alt={item.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />

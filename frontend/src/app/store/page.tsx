@@ -9,10 +9,10 @@ export default function StorePage() {
     const [activeTab, setActiveTab] = useState('LIVE'); // LIVE, PRODUCTS, ABOUT
 
     const STOCKS = [
-        { name: 'Country Chicken (Natu Kodi)', price: '₹650', weight: '1kg+', img: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=800&q=80', status: 'In Stock' },
-        { name: 'Potlam Mutton', price: '₹950', weight: '500g', img: 'https://images.unsplash.com/photo-1603048297172-c923170e2801?auto=format&fit=crop&w=800&q=80', status: 'Premium' },
-        { name: 'Standard Broiler', price: '₹280', weight: '1kg', img: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80', status: 'Fresh' },
-        { name: 'Artisanal Mutton', price: '₹880', weight: '1kg', img: 'https://images.unsplash.com/photo-1551028150-64b9f398f678?auto=format&fit=crop&w=800&q=80', status: 'Hygienic' },
+        { name: 'Country Chicken (Natu Kodi)', price: '₹650', weight: '1kg+', img: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=800&q=80&sig=stock_1', status: 'In Stock' },
+        { name: 'Potlam Mutton', price: '₹950', weight: '500g', img: 'https://images.unsplash.com/photo-1603048297172-c923170e2801?auto=format&fit=crop&w=800&q=80&sig=stock_2', status: 'Premium' },
+        { name: 'Standard Broiler', price: '₹280', weight: '1kg', img: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80&sig=stock_3', status: 'Fresh' },
+        { name: 'Artisanal Mutton', price: '₹880', weight: '1kg', img: 'https://images.unsplash.com/photo-1551028150-64b9f398f678?auto=format&fit=crop&w=800&q=80&sig=stock_4', status: 'Hygienic' },
     ];
 
     return (
@@ -21,7 +21,7 @@ export default function StorePage() {
             <section className="h-[90vh] relative overflow-hidden flex items-end">
                 <div className="absolute inset-0 z-0">
                     <img
-                        src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1920&q=80"
+                        src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1920&q=80&sig=store_hero"
                         className="w-full h-full object-cover opacity-50 contrast-125 saturate-150"
                         alt="Flagship Store"
                     />
@@ -110,7 +110,7 @@ export default function StorePage() {
                                     <div className="group relative aspect-video rounded-[3.5rem] overflow-hidden border border-white/10 bg-slate-900 shadow-2xl">
                                         <div className="absolute inset-0 bg-slate-950/20 z-10" />
                                         <img
-                                            src="https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=1200"
+                                            src="https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=1200&sig=cam_1"
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                                             alt="Live Bird Yard"
                                         />
@@ -129,7 +129,7 @@ export default function StorePage() {
                                     <div className="group relative aspect-video rounded-[3.5rem] overflow-hidden border border-white/10 bg-slate-900 shadow-2xl">
                                         <div className="absolute inset-0 bg-slate-950/20 z-10" />
                                         <img
-                                            src="https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=1200"
+                                            src="https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=1200&sig=cam_4"
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                                             alt="Artisanal Butchery"
                                         />

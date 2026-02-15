@@ -79,7 +79,7 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
         <div className="min-h-screen bg-slate-50">
             {/* Premium Hero Section */}
             <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-20 text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=1920&q=80&sig=50')] bg-cover bg-center opacity-5" />
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=1920&q=80&sig=list_hero')] bg-cover bg-center opacity-5" />
                 <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-transparent to-transparent" />
 
                 <div className="container mx-auto px-4 relative z-10">
@@ -195,7 +195,7 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
                                             <motion.img
                                                 whileHover={{ scale: 1.1 }}
                                                 transition={{ duration: 0.6 }}
-                                                src={butcher.image_url || 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80&sig=50'}
+                                                src={butcher.image_url || 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80&sig=fallback_butcher'}
                                                 alt={butcher.name}
                                                 className="w-full h-full object-cover"
                                             />

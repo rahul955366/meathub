@@ -54,7 +54,7 @@ export default function MenuItemList({ item, onItemClick }: MenuItemProps) {
             {/* Image Thumbnail - Zomato Style Square */}
             <div className="relative w-32 h-32 md:w-40 md:h-40 flex-shrink-0 rounded-2xl overflow-hidden bg-slate-100 shadow-sm">
                 <img
-                    src={item.image_url || 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=400&q=80'}
+                    src={item.image_url || 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=400&q=80&sig=fallback_menu'}
                     alt={item.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />

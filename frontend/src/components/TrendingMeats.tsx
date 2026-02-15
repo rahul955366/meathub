@@ -7,10 +7,24 @@ import Link from 'next/link';
 import ProductCard from './ProductCard';
 
 export default function TrendingMeats({ items }: { items: any[] }) {
-    // Filter to exclude pet/gym and take first 6
-    const trending = (items || [])
-        .filter(item => !['PET', 'GYM'].includes(item.category.toUpperCase()))
-        .slice(0, 6);
+    // Intelligent Trending: Pick 1 from each main category first, then fill
+    const categories = ['CHICKEN', 'MUTTON', 'FISH', 'PRAWNS'];
+    const diverseTrending: any[] = [];
+    const usedIds = new Set();
+    const cleanItems = (items || []).filter(item => !['PET', 'GYM'].includes(item.category.toUpperCase()));
+
+    // 1. Pick one from each category
+    categories.forEach(cat => {
+        const item = cleanItems.find(i => i.category.toUpperCase() === cat && !usedIds.has(i.id));
+        if (item) {
+            diverseTrending.push(item);
+            usedIds.add(item.id);
+        }
+    });
+
+    // 2. Fill the rest to reach 6 items
+    const fillers = cleanItems.filter(i => !usedIds.has(i.id)).slice(0, 6 - diverseTrending.length);
+    const trending = [...diverseTrending, ...fillers];
 
     return (
         <section className="py-12 bg-white">

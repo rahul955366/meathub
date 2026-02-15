@@ -28,7 +28,7 @@ export default function SubscriptionDashboard() {
             butcher: 'KPHB Master Butcher',
             item: '1.5kg Country Chicken (Bone-in)',
             price: '₹950',
-            img: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=400&q=80'
+            img: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=400&q=80&sig=scorched_earth_dashboard_1'
         },
         {
             id: 2,
@@ -39,7 +39,7 @@ export default function SubscriptionDashboard() {
             butcher: 'Meathub Flagship',
             item: '500g Chicken Breast (Clean Cut)',
             price: '₹220',
-            img: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=400&q=80'
+            img: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=400&q=80&sig=scorched_earth_dashboard_2'
         },
         {
             id: 3,
@@ -50,7 +50,7 @@ export default function SubscriptionDashboard() {
             butcher: 'Hyderabadi Halal Master',
             item: '500g Organ Meat Mix',
             price: '₹180',
-            img: 'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?auto=format&fit=crop&w=400&q=80'
+            img: 'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?auto=format&fit=crop&w=400&q=80&sig=scorched_earth_dashboard_3'
         }
     ]);
 

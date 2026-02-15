@@ -12,7 +12,7 @@ export default async function PetPage() {
             <section className="relative h-[80vh] flex items-center overflow-hidden bg-rose-950">
                 <div className="absolute inset-0">
                     <img
-                        src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=1920"
+                        src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=1920&sig=pet_hero"
                         className="w-full h-full object-cover opacity-50"
                         alt="Happy dog"
                     />

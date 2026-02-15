@@ -36,17 +36,21 @@ export default function ButcherMenu({
     const { cart, totalAmount, addToCart } = useAppContext();
 
     // Group items by category (Current Shop)
-    const shopCategories = Array.from(new Set(items.map((i: any) => i.category || 'Other')));
+    const shopCategories = React.useMemo(() =>
+        Array.from(new Set(items.map((i: any) => i.category || 'Other'))),
+        [items]);
     const menuCategories = ['Recommended', ...shopCategories];
 
     // Filter Logic for Main Product Feed
-    const baseFiltered = activeCategory === 'Recommended'
-        ? items.filter((i: any) => i.price > 0).slice(0, 10)
-        : items.filter((i: any) => (i.category || 'Other').toUpperCase() === activeCategory.toUpperCase());
+    const filteredItems = React.useMemo(() => {
+        const baseFiltered = activeCategory === 'Recommended'
+            ? items.filter((i: any) => i.price > 0).slice(0, 10)
+            : items.filter((i: any) => (i.category || 'Other').toUpperCase() === activeCategory.toUpperCase());
 
-    const filteredItems = baseFiltered.filter((i: any) =>
-        i.name.toLowerCase().includes(localSearch.toLowerCase())
-    );
+        return baseFiltered.filter((i: any) =>
+            i.name.toLowerCase().includes(localSearch.toLowerCase())
+        );
+    }, [items, activeCategory, localSearch]);
 
     // Cross-Shop Stock Logic
     const nearbyShopsWithStock = (itemName: string) => {
@@ -249,7 +253,7 @@ export default function ButcherMenu({
                         >
                             <div className="relative h-72">
                                 <img
-                                    src={selectedItem.image_url || 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop'}
+                                    src={selectedItem.image_url || 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&sig=scorched_earth_modal'}
                                     className="w-full h-full object-cover"
                                 />
                                 <button

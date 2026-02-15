@@ -14,8 +14,8 @@ export default function ProteinSelection() {
             label: 'Chicken',
             tagline: 'Fresh & Tender',
             gradient: 'from-amber-400 via-orange-400 to-orange-500',
-            image: 'https://images.unsplash.com/photo-1629713014426-104c9df41005?auto=format&fit=crop&w=800&q=80&sig=1', // Whole Chicken Fresh
-            shops: '24 Shops',
+            image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80', // Raw chicken pieces on board
+            shops: '19 Shops',
             popular: true
         },
         {
@@ -24,28 +24,28 @@ export default function ProteinSelection() {
             label: 'Mutton',
             tagline: 'Premium Cuts',
             gradient: 'from-rose-500 via-red-500 to-red-600',
-            image: 'https://images.unsplash.com/photo-1551028150-64b9f398f678?auto=format&fit=crop&w=800&q=80&sig=19', // Mutton Leg Prime
-            shops: '18 Shops',
+            image: 'https://images.unsplash.com/photo-1602491993910-ed99d07318af?auto=format&fit=crop&w=800&q=80', // Raw red meat chunks
+            shops: '19 Shops',
             popular: true
         },
         {
             id: 3,
             name: 'FISH',
             label: 'Fish',
-            tagline: 'Atlantic Catch',
+            tagline: 'Fresh Catch',
             gradient: 'from-cyan-400 via-blue-400 to-blue-500',
-            image: 'https://images.unsplash.com/photo-1513267048331-5611cad62e41?auto=format&fit=crop&w=800&q=80&sig=32', // Pomfret Clear Catch
-            shops: '12 Shops',
+            image: 'https://images.unsplash.com/photo-1534604973900-c41ab4c5d4b0?auto=format&fit=crop&w=800&q=80', // Fresh whole fish on display
+            shops: '19 Shops',
             popular: false
         },
         {
             id: 4,
             name: 'PRAWNS',
             label: 'Prawns',
-            tagline: 'Freshwater Shrimps',
+            tagline: 'Ocean Fresh',
             gradient: 'from-pink-400 via-rose-400 to-rose-500',
-            image: 'https://images.unsplash.com/photo-1559737558-2f5a35f4523b?auto=format&fit=crop&w=800&q=80', // Jumbo Prawns
-            shops: '8 Shops',
+            image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5df47?auto=format&fit=crop&w=800&q=80', // Fresh prawns/shrimp
+            shops: '19 Shops',
             popular: false
         },
         {
@@ -54,8 +54,8 @@ export default function ProteinSelection() {
             label: 'Farm Eggs',
             tagline: 'Free Range',
             gradient: 'from-yellow-300 via-amber-300 to-amber-400',
-            image: 'https://images.unsplash.com/photo-1598965402089-2741228d5e56?auto=format&fit=crop&w=800&q=80',
-            shops: '15 Shops',
+            image: 'https://images.unsplash.com/photo-1506976785307-8732e854ad03?auto=format&fit=crop&w=800&q=80', // Brown farm eggs
+            shops: '19 Shops',
             popular: false
         }
     ];

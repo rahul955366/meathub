@@ -162,7 +162,7 @@ export default function SubscriptionsPage() {
             <section className="py-40">
                 <div className="container mx-auto px-4">
                     <div className="bg-rose-600 rounded-[4rem] p-16 md:p-32 text-center space-y-12 relative overflow-hidden shadow-[0_40px_100px_-20px_rgba(225,29,72,0.4)]">
-                        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1920&q=80')] bg-cover opacity-10" />
+                        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1920&q=80&sig=scorched_earth_sub_hero')] bg-cover opacity-10" />
                         <h2 className="text-6xl md:text-9xl font-black tracking-tighter uppercase italic leading-[0.8] relative z-10 text-white">
                             The Pure <br /> Lifestyle.
                         </h2>

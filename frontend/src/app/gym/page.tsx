@@ -12,7 +12,7 @@ export default async function GymPage() {
             <section className="relative h-[80vh] flex items-center overflow-hidden">
                 <div className="absolute inset-0">
                     <img
-                        src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1920"
+                        src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1920&sig=gym_hero"
                         className="w-full h-full object-cover opacity-30"
                         alt="Workout"
                     />

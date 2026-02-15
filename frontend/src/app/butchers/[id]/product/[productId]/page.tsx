@@ -41,7 +41,7 @@ export default async function ProductDetailPage({
                         <div className="space-y-8">
                             <div className="aspect-square rounded-[4rem] overflow-hidden bg-slate-50 border border-slate-100 shadow-2xl relative">
                                 <img
-                                    src={item.image_url || 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80'}
+                                    src={item.image_url || 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80&sig=scorched_earth_detail'}
                                     className="w-full h-full object-cover"
                                     alt={item.name}
                                 />
