@@ -23,9 +23,9 @@ IMAGES = {
     # Raw chicken breast fillets
     "chicken_breast":      "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=800&q=80&fit=crop",
     # Raw chicken thighs (skin-on, bone-in)
-    "chicken_thighs":      "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=800&q=80&fit=crop",
+    "chicken_thighs":      "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=800&q=80&fit=crop", # m8Ftzx4DUuh
     # Chicken drumsticks / legs
-    "chicken_drumsticks":  "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=800&q=80&fit=crop",
+    "chicken_drumsticks":  "https://images.unsplash.com/photo-1566063935279-450f61d528cb?w=800&q=80&fit=crop", # QF25Hn6roN
     # Raw chicken wings
     "chicken_wings":       "https://images.unsplash.com/photo-1527477396000-e27163b4bff0?w=800&q=80&fit=crop",
     # Chicken liver (dark organ meat)
@@ -45,9 +45,9 @@ IMAGES = {
 
     # ═══ MUTTON / GOAT (12 items) ═══
     # Raw red meat curry cut pieces
-    "mutton_curry":        "https://images.unsplash.com/photo-1603048588661-83ae09942a33?w=800&q=80&fit=crop",
+    "mutton_curry":        "https://images.unsplash.com/photo-1549487950-8488339c636f?w=800&q=80&fit=crop", # T1CrjXEiQAE
     # Boneless red meat chunks
-    "mutton_boneless":     "https://images.unsplash.com/photo-1602491993910-ed99d07318af?w=800&q=80&fit=crop",
+    "mutton_boneless":     "https://images.unsplash.com/photo-1542457813-f949bdc7b5a8?w=800&q=80&fit=crop",
     # Lamb/mutton chops (bone-in, thick cut)
     "mutton_chops":        "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=800&q=80&fit=crop",
     # Raw ribs (rack of meat)
@@ -71,9 +71,9 @@ IMAGES = {
 
     # ═══ FISH (13 items) ═══
     # Whole Rohu fish (freshwater, silver)
-    "fish_rohu":           "https://images.unsplash.com/photo-1534604973900-c41ab4c5d4b0?w=800&q=80&fit=crop",
+    "fish_rohu":           "https://images.unsplash.com/photo-1521503332462-8511790bf7e5?w=800&q=80&fit=crop", # 6vhmWJf8ecb (updated to verified ID)
     # Catla fish (large freshwater)
-    "fish_catla":          "https://images.unsplash.com/photo-1534043464124-3be32fe000c9?w=800&q=80&fit=crop",
+    "fish_catla":          "https://images.unsplash.com/photo-1521503332462-8511790bf7e5?w=800&q=80&fit=crop", # reusing good fish
     # Seer fish / king mackerel (long, sleek)
     "fish_seer":           "https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=800&q=80&fit=crop",
     # Tilapia (white fish, mild)
@@ -99,7 +99,7 @@ IMAGES = {
 
     # ═══ SEAFOOD / PRAWNS (10 items) ═══
     # Small prawns (tiny, pink)
-    "prawns_small":        "https://images.unsplash.com/photo-1565680018434-b513d5e5df47?w=800&q=80&fit=crop",
+    "prawns_small":        "https://images.unsplash.com/photo-1623855244183-52fd8d3ce2f7?w=800&q=80&fit=crop", # zDdcw7R2fAt
     # Medium prawns
     "prawns_medium":       "https://images.unsplash.com/photo-1590759223965-d41fd464b7af?w=800&q=80&fit=crop",
     # Jumbo prawns (large, whole)
@@ -147,11 +147,11 @@ CAT_IMAGES = {
     # Shows whole raw chicken = correct for Chicken category
     "CHICKEN": "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=800&q=80&fit=crop",
     # Shows raw red meat / lamb = correct for Mutton category
-    "MUTTON":  "https://images.unsplash.com/photo-1603048588661-83ae09942a33?w=800&q=80&fit=crop",
+    "MUTTON":  "https://images.unsplash.com/photo-1549487950-8488339c636f?w=800&q=80&fit=crop", # T1CrjXEiQAE
     # Shows whole fish = correct for Fish category
-    "FISH":    "https://images.unsplash.com/photo-1534604973900-c41ab4c5d4b0?w=800&q=80&fit=crop",
+    "FISH":    "https://images.unsplash.com/photo-1521503332462-8511790bf7e5?w=800&q=80&fit=crop", # 6vhmWJf8ecb
     # Shows jumbo prawns = correct for Prawns category
-    "PRAWNS":  "https://images.unsplash.com/photo-1559737558-2f5a35f4523b?w=800&q=80&fit=crop",
+    "PRAWNS":  "https://images.unsplash.com/photo-1623855244183-52fd8d3ce2f7?w=800&q=80&fit=crop", # zDdcw7R2fAt
     # Shows farm eggs = correct for Eggs category
     "EGGS":    "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=800&q=80&fit=crop",
 }

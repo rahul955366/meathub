@@ -24,7 +24,7 @@ export default function ProteinSelection() {
             label: 'Mutton',
             tagline: 'Premium Cuts',
             gradient: 'from-rose-500 via-red-500 to-red-600',
-            image: 'https://images.unsplash.com/photo-1602491993910-ed99d07318af?auto=format&fit=crop&w=800&q=80', // Raw red meat chunks
+            image: 'https://images.unsplash.com/photo-1549487950-8488339c636f?auto=format&fit=crop&w=800&q=80', // Raw red meat chunks
             shops: '19 Shops',
             popular: true
         },
@@ -34,7 +34,7 @@ export default function ProteinSelection() {
             label: 'Fish',
             tagline: 'Fresh Catch',
             gradient: 'from-cyan-400 via-blue-400 to-blue-500',
-            image: 'https://images.unsplash.com/photo-1534604973900-c41ab4c5d4b0?auto=format&fit=crop&w=800&q=80', // Fresh whole fish on display
+            image: 'https://images.unsplash.com/photo-1521503332462-8511790bf7e5?auto=format&fit=crop&w=800&q=80', // Fresh whole fish on display
             shops: '19 Shops',
             popular: false
         },
@@ -44,7 +44,7 @@ export default function ProteinSelection() {
             label: 'Prawns',
             tagline: 'Ocean Fresh',
             gradient: 'from-pink-400 via-rose-400 to-rose-500',
-            image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5df47?auto=format&fit=crop&w=800&q=80', // Fresh prawns/shrimp
+            image: 'https://images.unsplash.com/photo-1623855244183-52fd8d3ce2f7?auto=format&fit=crop&w=800&q=80', // Fresh prawns/shrimp
             shops: '19 Shops',
             popular: false
         },
