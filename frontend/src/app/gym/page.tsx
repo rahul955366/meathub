@@ -1,20 +1,85 @@
+"use client";
+
+import React, { useState } from 'react';
 import { getMeatItems } from '@/lib/api';
 import { Zap, Target, Award } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
+import SubscriptionForm from '@/components/SubscriptionForm';
+import NutritionAssistant from '@/components/NutritionAssistant';
+import ProteinCalculator from '@/components/ProteinCalculator';
+import { MeatItem } from '@/types';
 
-export default async function GymPage() {
-    const items = await getMeatItems();
-    const proteinProducts = items.filter((item: any) => item.category.toUpperCase() === 'GYM' || item.name.toLowerCase().includes('breast') || item.name.toLowerCase().includes('lean'));
+export default function GymPage() {
+    const [items, setItems] = useState<MeatItem[]>([]);
+    const [activeSubscriptionType, setActiveSubscriptionType] = useState<'GYM' | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState('Maintenance');
+
+    React.useEffect(() => {
+        getMeatItems().then(setItems);
+    }, []);
+
+    const handleStartProtocol = (planName: string) => {
+        setSelectedPlan(planName);
+        setActiveSubscriptionType('GYM');
+    };
+
+    // Curated high-quality fitness/meat images
+    // Curated high-quality fitness/meat images - Expanded for variety
+    const GYM_IMAGES = [
+        'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80', // Steak
+        'https://images.unsplash.com/photo-1588168333986-5078d3ae3976?auto=format&fit=crop&w=800&q=80', // Chicken Breast
+        'https://images.unsplash.com/photo-1615937657715-bc7b4b7962c1?auto=format&fit=crop&w=800&q=80', // Lean Beef
+        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80', // Salad with Meat
+        'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80', // Healthy Bowl
+        'https://images.unsplash.com/photo-1432139555190-58524dae6a55?auto=format&fit=crop&w=800&q=80', // Steak Plate
+        'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80', // Raw Meat
+        'https://images.unsplash.com/photo-1551024601-56455b245a61?auto=format&fit=crop&w=800&q=80', // Grilled Chicken
+        'https://images.unsplash.com/photo-1585238342024-78d387f4a707?auto=format&fit=crop&w=800&q=80', // Turkey Breast
+        'https://images.unsplash.com/photo-1533777857419-3746f8ec1021?auto=format&fit=crop&w=800&q=80'  // Salmon Fillet (Prot)
+    ];
+
+    // Filter for protein-heavy items and ensure UNIQUE product names across multiple butchers
+    const nameMap = new Map<string, MeatItem>();
+    items.forEach(item => {
+        const categoryMatch = item.category?.toUpperCase() === 'GYM' || item.category?.toUpperCase() === 'CHICKEN';
+        const nameMatch = ['breast', 'lean', 'steak', 'thigh', 'salad', 'salmon'].some(keyword =>
+            item.name.toLowerCase().includes(keyword)
+        );
+
+        if (categoryMatch || nameMatch) {
+            const normalizedName = item.name.toLowerCase().trim();
+            // Only keep the first encounter or the cheapest one (better UX)
+            if (!nameMap.has(normalizedName)) {
+                nameMap.set(normalizedName, item);
+            } else {
+                const existing = nameMap.get(normalizedName)!;
+                if (parseFloat(item.price) < parseFloat(existing.price)) {
+                    nameMap.set(normalizedName, item);
+                }
+            }
+        }
+    });
+
+    const proteinProducts = Array.from(nameMap.values())
+        .slice(0, 15) // Limit to top 15 variety cuts
+        .map((item, index) => {
+            // Enhanced deterministic visual assignment using modulo on ID and index
+            const imageIndex = (Number(item.id) + index) % GYM_IMAGES.length;
+            return {
+                ...item,
+                image_url: item.image_url && item.image_url.length > 10 ? item.image_url : GYM_IMAGES[imageIndex]
+            };
+        });
 
     return (
         <main className="min-h-screen bg-slate-950 text-white">
-            {/* ... (Hero and Plans sections same) ... */}
+            {/* Hero Section */}
             <section className="relative h-[80vh] flex items-center overflow-hidden">
                 <div className="absolute inset-0">
                     <img
                         src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1920&sig=gym_hero"
                         className="w-full h-full object-cover opacity-30"
-                        alt="Workout"
+                        alt="Performance Fitness"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent" />
                 </div>
@@ -47,6 +112,9 @@ export default async function GymPage() {
                 </div>
             </section>
 
+            <ProteinCalculator />
+
+            {/* Plans Section */}
             <section className="py-24 bg-white text-slate-900 border-y border-slate-200">
                 <div className="container mx-auto px-4">
                     <div className="text-center max-w-2xl mx-auto mb-20 space-y-4">
@@ -74,7 +142,9 @@ export default async function GymPage() {
                                     <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-current" /> 6 AM Door-Step Delivery</li>
                                     <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-current" /> Pre-sliced for Cooking</li>
                                 </ul>
-                                <button className={`w-full h-16 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${i === 1 ? 'bg-rose-600 text-white hover:bg-white hover:text-rose-600' : 'bg-slate-900 text-white hover:bg-rose-600'}`}>
+                                <button
+                                    onClick={() => handleStartProtocol(plan.name)}
+                                    className={`w-full h-16 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${i === 1 ? 'bg-rose-600 text-white hover:bg-white hover:text-rose-600' : 'bg-slate-900 text-white hover:bg-rose-600'}`}>
                                     Start Protocol
                                 </button>
                             </div>
@@ -82,6 +152,18 @@ export default async function GymPage() {
                     </div>
                 </div>
 
+                {/* Sub Modal */}
+                {activeSubscriptionType && (
+                    <SubscriptionForm
+                        type={activeSubscriptionType}
+                        planId={selectedPlan}
+                        onClose={() => setActiveSubscriptionType(null)}
+                    />
+                )}
+
+                <NutritionAssistant context="GYM" />
+
+                {/* Products Grid */}
                 <div className="container mx-auto px-4 mt-24">
                     <div className="flex items-center justify-between mb-16">
                         <div>
@@ -92,12 +174,12 @@ export default async function GymPage() {
 
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
                         {proteinProducts.length > 0 ? (
-                            proteinProducts.map((item: any) => (
+                            proteinProducts.map((item: MeatItem) => (
                                 <ProductCard key={item.id} item={item} />
                             ))
                         ) : (
                             <div className="col-span-full py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
-                                <p className="text-slate-400 font-black uppercase tracking-widest text-sm">Muscle fuel arriving soon from our village sources...</p>
+                                <p className="text-slate-400 font-black uppercase tracking-widest text-sm italic">Muscle fuel arriving soon from our village sources...</p>
                             </div>
                         )}
                     </div>

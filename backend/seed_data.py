@@ -177,11 +177,12 @@ SHOPS = [
         "name": "MEATHUB FLAGSHIP STORE",
         "addr": "Plot 42, KPHB Main Road, Phase 3, Kukatpally, Hyderabad - 500072",
         "phone": "9100000001",
-        "desc": "The gold standard of meat in Hyderabad. Premium country chicken, artisanal mutton cuts, and live butchery with precision hygiene. Our master butchers serve you fresh, every time.",
+        "desc": "The gold standard of meat in Hyderabad. Premium country chicken, artisanal mutton cuts, and LIVE video verification for every order. Our master butchers serve you fresh, every time.",
         "lat": 17.4935, "lng": 78.3911,
         "img": IMAGES["shop_meathub"],
         "open": "06:00 AM", "close": "10:00 PM",
         "source_idx": 0,
+        "is_official": True
     },
     # ── KPHB & KUKATPALLY ──
     {
@@ -445,6 +446,16 @@ ALL_PRODUCTS = [
     {"name": "Lobster",              "cat": "PRAWNS", "img": IMAGES["lobster"],            "price": 2200},
     {"name": "Clams",                "cat": "PRAWNS", "img": IMAGES["clams"],              "price": 300},
     {"name": "Mussels",              "cat": "PRAWNS", "img": IMAGES["mussels"],            "price": 350},
+    
+    # GYM SPECIALS
+    {"name": "Pre-Portioned Chicken Breast (500g)", "cat": "GYM", "img": IMAGES["chicken_breast"], "price": 190},
+    {"name": "Lean Mutton Chunks (500g)", "cat": "GYM", "img": IMAGES["mutton_boneless"], "price": 480},
+    {"name": "Omega-3 Salmon Fillet", "cat": "GYM", "img": IMAGES["fish_fillets"], "price": 650},
+    
+    # PET SPECIALS
+    {"name": "Bio-Correct Chicken Mix", "cat": "PET", "img": IMAGES["chicken_keema"], "price": 120},
+    {"name": "Digestive Mutton Broth Bones", "cat": "PET", "img": IMAGES["mutton_paya"], "price": 150},
+    {"name": "Paddy-Field Natu Kodi (Small)", "cat": "CHICKEN", "img": IMAGES["chicken_whole"], "price": 750},
 ]
 
 
@@ -492,6 +503,7 @@ def seed_data():
                 "longitude":    shop["lng"],
                 "opening_time": shop["open"],
                 "closing_time": shop["close"],
+                "is_official":  shop.get("is_official", False),
             }
         )
         all_butchers.append(butcher)

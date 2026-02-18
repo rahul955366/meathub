@@ -5,9 +5,11 @@ import { motion } from 'framer-motion';
 import { Plus, Minus, Star, Award, Flame } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 
+import { MeatItem, CartItem } from '@/types';
+
 interface MenuItemProps {
-    item: any;
-    onItemClick?: (item: any) => void;
+    item: MeatItem;
+    onItemClick?: (item: MeatItem) => void;
 }
 
 export default function MenuItemList({ item, onItemClick }: MenuItemProps) {
@@ -15,7 +17,7 @@ export default function MenuItemList({ item, onItemClick }: MenuItemProps) {
     const [isHovered, setIsHovered] = useState(false);
 
     // Find quantity in cart
-    const cartItem = cart.find((i: any) => i.id === item.id);
+    const cartItem = cart.find((i: CartItem) => i.meat_item_id === item.id);
     const quantity = cartItem ? cartItem.quantity : 0;
 
     const handleAdd = (e: React.MouseEvent) => {

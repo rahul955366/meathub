@@ -1,23 +1,38 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { MapPin, Star, Clock, ArrowRight, Navigation, Award, TrendingUp, Zap, ShieldCheck, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { Butcher, MeatItem } from '@/types';
+import toast from 'react-hot-toast';
 
 interface ButcherListProps {
-    initialButchers: any[];
-    initialItems: any[];
+    initialButchers: Butcher[];
+    initialItems: MeatItem[];
 }
+
+interface EnrichedButcher extends Butcher {
+    itemCount: number;
+    distance: number;
+    rating: string;
+    deliveryTime: number;
+    offer: string | null;
+}
+
+const FALLBACK_BUTCHER_IMG = 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80';
 
 export default function ButcherList({ initialButchers, initialItems }: ButcherListProps) {
     const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
     const query = searchParams.get('q');
     const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
     const [isLocating, setIsLocating] = useState(false);
 
-    const getDistance = (bLat: number, bLng: number) => {
+    const getDistance = (bLat: number = 17.4944, bLng: number = 78.3908) => {
         if (!userLocation) return 0;
         const rad = Math.PI / 180;
         const dLat = (bLat - userLocation.lat) * rad;
@@ -31,48 +46,83 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
 
     const handleLocate = () => {
         setIsLocating(true);
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                setIsLocating(false);
-            },
-            () => setIsLocating(false)
-        );
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                    setIsLocating(false);
+                    toast.success("Location detected! Showing nearest shops.");
+                },
+                (err) => {
+                    console.error("Geolocation error:", err);
+                    setIsLocating(false);
+                    toast.error("Could not detect location. Using default view.");
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        } else {
+            setIsLocating(false);
+            toast.error("Geolocation not supported by your browser.");
+        }
+    };
+
+    React.useEffect(() => {
+        // Automatically try to locate on mount
+        handleLocate();
+    }, []);
+
+    const updateSearch = (term: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (term) {
+            params.set('q', term);
+        } else {
+            params.delete('q');
+        }
+        router.replace(`${pathname}?${params.toString()}`);
     };
 
     const filteredAndSortedButchers = useMemo(() => {
         let result = initialButchers;
 
         if (query) {
+            const lowerQuery = query.toLowerCase();
             const matchingItemIds = initialItems
                 .filter(item =>
-                    item.name?.toLowerCase().includes(query.toLowerCase()) ||
-                    item.category?.toLowerCase().includes(query.toLowerCase())
+                    item.name?.toLowerCase().includes(lowerQuery) ||
+                    item.category?.toLowerCase().includes(lowerQuery)
                 )
                 .map(item => item.butcher);
 
             result = initialButchers.filter(butcher =>
                 matchingItemIds.includes(butcher.id) ||
-                butcher.name?.toLowerCase().includes(query.toLowerCase()) ||
-                butcher.location?.toLowerCase().includes(query.toLowerCase())
+                butcher.shop_name?.toLowerCase().includes(lowerQuery) ||
+                butcher.address?.toLowerCase().includes(lowerQuery)
             );
         }
 
-        const withDetails = result.map((butcher: any) => {
-            const butcherItems = initialItems.filter((item: any) => item.butcher === butcher.id);
-            const distance = getDistance(parseFloat(butcher.latitude) || 17.4944, parseFloat(butcher.longitude) || 78.3908);
+        const withDetails: EnrichedButcher[] = result.map((butcher) => {
+            const butcherItems = initialItems.filter(item => item.butcher === butcher.id);
+            const lat = butcher.latitude || 17.4944;
+            const lng = butcher.longitude || 78.3908;
+            const distance = getDistance(lat, lng);
 
             return {
                 ...butcher,
                 itemCount: butcherItems.length,
                 distance: distance,
-                rating: (4.2 + (Number(butcher.id) % 5) * 0.1).toFixed(1),
-                deliveryTime: 25 + (Number(butcher.id) % 20),
-                offer: (Number(butcher.id) % 3 === 0) ? `${10 + (Number(butcher.id) % 20)}% OFF` : null
+                rating: butcher.is_official ? "4.8" : (4.2 + (Number(butcher.id) % 5) * 0.1).toFixed(1),
+                deliveryTime: butcher.is_official ? 20 : 25 + (Number(butcher.id) % 20),
+                offer: butcher.is_official ? "EXTCLUSIVE" : ((Number(butcher.id) % 3 === 0) ? `${10 + (Number(butcher.id) % 20)}% OFF` : null)
             };
         });
 
-        return withDetails.sort((a, b) => a.distance - b.distance);
+        return withDetails.sort((a, b) => {
+            // Official first
+            if (a.is_official && !b.is_official) return -1;
+            if (!a.is_official && b.is_official) return 1;
+            // Then distance
+            return a.distance - b.distance;
+        });
     }, [query, initialButchers, initialItems, userLocation]);
 
     return (
@@ -134,6 +184,22 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
             {/* Shop Cards Grid - Premium with Animations */}
             <div className="container mx-auto px-4 py-16">
 
+                {/* Categories Pill Bar */}
+                <div className="flex flex-wrap justify-center gap-3 mb-12">
+                    {['ALL', 'CHICKEN', 'MUTTON', 'FISH', 'PET', 'GYM'].map((cat) => (
+                        <button
+                            key={cat}
+                            onClick={() => updateSearch(cat === 'ALL' ? '' : cat)}
+                            className={`h-12 px-8 rounded-2xl font-black text-[10px] tracking-[0.2em] transition-all uppercase ${(query === cat || (cat === 'ALL' && !query))
+                                ? 'bg-rose-600 text-white shadow-xl shadow-rose-200'
+                                : 'bg-white text-slate-400 border border-slate-100 hover:border-rose-200 hover:text-rose-600'
+                                }`}
+                        >
+                            {cat}
+                        </button>
+                    ))}
+                </div>
+
                 {/* Search & Filter Bar */}
                 <div className="mb-12">
                     <div className="max-w-3xl mx-auto">
@@ -147,22 +213,13 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
                                 <input
                                     type="text"
                                     placeholder="Search for Chicken, Mutton, Fish or Shop Name..."
-                                    value={query || ''}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        const params = new URLSearchParams(window.location.search);
-                                        if (val) params.set('q', val);
-                                        else params.delete('q');
-                                        window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
-                                        // The query variable is from useSearchParams, which reflects URL changes
-                                    }}
+                                    defaultValue={query || ''}
+                                    onChange={(e) => updateSearch(e.target.value)}
                                     className="flex-1 bg-transparent px-6 text-lg font-black placeholder:text-slate-300 outline-none uppercase tracking-tight text-slate-900 italic"
                                 />
                                 {query && (
                                     <button
-                                        onClick={() => {
-                                            window.history.replaceState({}, '', window.location.pathname);
-                                        }}
+                                        onClick={() => updateSearch('')}
                                         className="h-12 w-12 flex items-center justify-center text-slate-300 hover:text-rose-500 transition-colors mr-2"
                                     >
                                         <Zap className="w-5 h-5 fill-current" />
@@ -180,7 +237,7 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
                         animate={{ opacity: 1 }}
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                     >
-                        {filteredAndSortedButchers.map((butcher: any, index: number) => (
+                        {filteredAndSortedButchers.map((butcher, index) => (
                             <motion.div
                                 key={butcher.id}
                                 initial={{ opacity: 0, y: 30 }}
@@ -195,8 +252,9 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
                                             <motion.img
                                                 whileHover={{ scale: 1.1 }}
                                                 transition={{ duration: 0.6 }}
-                                                src={butcher.image_url || 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80&sig=fallback_butcher'}
-                                                alt={butcher.name}
+                                                src={butcher.image_url || FALLBACK_BUTCHER_IMG}
+                                                onError={(e) => e.currentTarget.src = FALLBACK_BUTCHER_IMG}
+                                                alt={butcher.shop_name}
                                                 className="w-full h-full object-cover"
                                             />
 
@@ -212,10 +270,18 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
                                             )}
 
                                             {/* Trending Badge */}
-                                            {index < 3 && (
+                                            {index < 3 && !butcher.is_official && (
                                                 <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-lg px-3 py-2 rounded-full flex items-center gap-2 shadow-xl">
                                                     <TrendingUp className="w-4 h-4 text-emerald-500" />
                                                     <span className="text-xs font-black uppercase text-slate-900">Trending</span>
+                                                </div>
+                                            )}
+
+                                            {/* Official Badge */}
+                                            {butcher.is_official && (
+                                                <div className="absolute top-4 right-4 bg-slate-900 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-2xl border border-white/20">
+                                                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">MeatHub Official</span>
                                                 </div>
                                             )}
                                         </div>
@@ -225,8 +291,8 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
 
                                             {/* Shop Name & Rating */}
                                             <div className="space-y-3">
-                                                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight group-hover:text-rose-600 transition-colors">
-                                                    {butcher.shop_name || butcher.name}
+                                                <h3 className={`text-2xl font-black uppercase tracking-tight group-hover:text-rose-600 transition-colors ${butcher.is_official ? 'text-rose-600' : 'text-slate-900'}`}>
+                                                    {butcher.shop_name} {butcher.is_official && <span className="not-italic text-sm font-black text-rose-400 align-top ml-1">★</span>}
                                                 </h3>
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex items-center gap-1.5 bg-emerald-500 text-white px-3 py-1.5 rounded-lg shadow-lg">

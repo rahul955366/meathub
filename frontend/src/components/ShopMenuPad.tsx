@@ -4,6 +4,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Search, ChevronLeft, ChevronRight, MapPin, ArrowRight, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { MeatItem, Butcher } from '@/types';
+
 // Exhaustive Universal Product List - EXACTLY as requested by user
 const UNIVERSAL_MENU = [
     {
@@ -49,9 +51,9 @@ const UNIVERSAL_MENU = [
 ];
 
 interface ShopMenuPadProps {
-    currentShopItems: any[];
+    currentShopItems: MeatItem[];
     onItemClick: (itemName: string) => void;
-    nearbyShopsWithStock?: (itemName: string) => any[];
+    nearbyShopsWithStock?: (itemName: string) => Butcher[];
 }
 
 export default function ShopMenuPad({ currentShopItems = [], onItemClick, nearbyShopsWithStock }: ShopMenuPadProps) {
@@ -194,7 +196,7 @@ export default function ShopMenuPad({ currentShopItems = [], onItemClick, nearby
                                                     <p className="text-[8px] font-black uppercase text-rose-500 mb-1 flex items-center gap-1">
                                                         <MapPin className="w-2 h-2" /> Find it Elsewhere
                                                     </p>
-                                                    {alternatives.slice(0, 1).map((shop: any) => (
+                                                    {alternatives.slice(0, 1).map((shop: Butcher) => (
                                                         <div key={shop.id} className="flex items-center justify-between text-[9px] bg-white p-2.5 rounded-xl shadow-sm border border-rose-50">
                                                             <span className="font-bold text-slate-700 truncate">{shop.shop_name}</span>
                                                             <ArrowRight className="w-3 h-3 text-rose-500" />

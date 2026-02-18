@@ -4,14 +4,16 @@ import { useAppContext } from '@/context/AppContext';
 import { motion } from 'framer-motion';
 import ProductCard from './ProductCard';
 
+import { MeatItem } from '@/types';
+
 interface ProductListProps {
-    initialItems: any[];
+    initialItems: MeatItem[];
 }
 
 export default function ProductList({ initialItems }: ProductListProps) {
     const { searchQuery } = useAppContext();
 
-    const filteredItems = initialItems.filter(item =>
+    const filteredItems = initialItems.filter((item: MeatItem) =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.category.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -21,7 +23,7 @@ export default function ProductList({ initialItems }: ProductListProps) {
     return (
         <div className="space-y-24">
             {categories.map((category) => {
-                const categoryItems = filteredItems.filter((item: any) => item.category.toUpperCase() === category);
+                const categoryItems = filteredItems.filter((item: MeatItem) => item.category.toUpperCase() === category);
                 if (categoryItems.length === 0) return null;
 
                 return (
@@ -38,7 +40,7 @@ export default function ProductList({ initialItems }: ProductListProps) {
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                            {categoryItems.map((item: any) => (
+                            {categoryItems.map((item: MeatItem) => (
                                 <ProductCard key={item.id} item={item} />
                             ))}
                         </div>

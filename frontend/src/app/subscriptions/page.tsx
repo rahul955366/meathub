@@ -13,9 +13,11 @@ import {
     CheckCircle2,
     Crown
 } from 'lucide-react';
+import SubscriptionForm from '../../components/SubscriptionForm';
 
 export default function SubscriptionsPage() {
     const [selectedPlan, setSelectedPlan] = useState('MONTHLY');
+    const [activeSubscriptionType, setActiveSubscriptionType] = useState<'GENERAL' | 'GYM' | 'PET' | null>(null);
 
     const PLANS = [
         {
@@ -32,7 +34,7 @@ export default function SubscriptionsPage() {
             price: '₹8,500',
             period: 'per month',
             desc: 'Daily or Custom Schedule',
-            features: ['Early 6AM Priority Drops', 'Potlam Mutton Access', 'Natu Kodi (Flagship) Included', 'Dedicated Sourcing Manager', 'Live Video Verification']
+            features: ['Early 6AM Priority Drops', 'Sunday Auto-Dispatch (No check-in)', 'Potlam Mutton Access', 'Natu Kodi (Flagship) Included', 'Live Video Verification']
         },
         {
             id: 'YEARLY',
@@ -43,6 +45,11 @@ export default function SubscriptionsPage() {
             features: ['Locked-in rates for 12 months', 'Exclusive Festival Cuts', '24/7 Concierge Support', 'Flagship Private Events', 'Bio-Secure Farm Access']
         }
     ];
+
+    const handleSelectPlan = (planId: string) => {
+        setSelectedPlan(planId);
+        setActiveSubscriptionType('GENERAL');
+    };
 
     return (
         <main className="min-h-screen bg-slate-50 font-sans">
@@ -61,6 +68,7 @@ export default function SubscriptionsPage() {
                         </h1>
                         <p className="text-slate-400 text-lg md:text-xl font-medium italic leading-relaxed max-w-2xl border-l-4 border-slate-800 pl-8">
                             Experience the luxury of never running out. Fresh, artisanal cuts from KPHB master butchers, delivered on your schedule like clockwork.
+                            <br /><span className="text-rose-400">Now featuring 6AM Early Morning Drops & Sunday Auto-Dispatch.</span>
                         </p>
                     </div>
                 </div>
@@ -111,14 +119,77 @@ export default function SubscriptionsPage() {
                                 ))}
                             </div>
 
-                            <button className={`w-full h-16 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${selectedPlan === plan.id
-                                ? 'bg-rose-600 text-white shadow-2xl hover:bg-rose-700'
-                                : 'bg-slate-950 text-white hover:bg-rose-600'
-                                }`}>
-                                Select Plan
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSelectPlan(plan.id);
+                                }}
+                                className={`w-full h-16 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${selectedPlan === plan.id
+                                    ? 'bg-rose-600 text-white shadow-2xl hover:bg-rose-700'
+                                    : 'bg-slate-950 text-white hover:bg-rose-600'
+                                    }`}>
+                                {selectedPlan === plan.id ? 'Subscribe Now' : 'Select Plan'}
                             </button>
                         </motion.div>
                     ))}
+                </div>
+            </section>
+
+            {/* SPECIALIZED PORTALS */}
+            <section className="py-24 bg-slate-900 overflow-hidden">
+                <div className="container mx-auto px-4">
+                    <div className="text-center mb-16 space-y-4">
+                        <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic text-white">Specialized <span className="text-rose-600 not-italic">Portals.</span></h2>
+                        <p className="text-slate-400 font-medium italic">Precision nutrition for your specific lifestyle goals.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                        {/* Gym Portal */}
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-[3rem] p-10 border border-white/5 relative overflow-hidden group"
+                        >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl -mr-10 -mt-10" />
+                            <div className="space-y-6 relative z-10">
+                                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover:bg-emerald-500/20 transition-all">
+                                    <Zap className="w-8 h-8 text-emerald-500" />
+                                </div>
+                                <div className="space-y-2">
+                                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Gym Portal</h3>
+                                    <p className="text-slate-400 text-sm font-medium italic leading-relaxed">Protein-optimized subscriptions tailored for bodybuilding, maintenance, or weight loss.</p>
+                                </div>
+                                <button
+                                    onClick={() => setActiveSubscriptionType('GYM')}
+                                    className="h-14 px-8 bg-white text-slate-900 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-500 hover:text-white transition-all shadow-2xl"
+                                >
+                                    Activate Gym Cycle
+                                </button>
+                            </div>
+                        </motion.div>
+
+                        {/* Pet Portal */}
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-[3rem] p-10 border border-white/5 relative overflow-hidden group"
+                        >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-rose-600/10 blur-3xl -mr-10 -mt-10" />
+                            <div className="space-y-6 relative z-10">
+                                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover:bg-rose-600/20 transition-all">
+                                    <Zap className="w-8 h-8 text-rose-600" />
+                                </div>
+                                <div className="space-y-2">
+                                    <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Pet Portal</h3>
+                                    <p className="text-slate-400 text-sm font-medium italic leading-relaxed">Grade-A raw feeding plans for pets. Science-backed, master butcher prepared.</p>
+                                </div>
+                                <button
+                                    onClick={() => setActiveSubscriptionType('PET')}
+                                    className="h-14 px-8 bg-white text-slate-900 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-600 hover:text-white transition-all shadow-2xl"
+                                >
+                                    Activate Pet Cycle
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
                 </div>
             </section>
 
@@ -174,6 +245,15 @@ export default function SubscriptionsPage() {
                     </div>
                 </div>
             </section>
+
+            {/* Subscription Configuration Modal */}
+            {activeSubscriptionType && (
+                <SubscriptionForm
+                    type={activeSubscriptionType}
+                    planId={selectedPlan}
+                    onClose={() => setActiveSubscriptionType(null)}
+                />
+            )}
         </main>
     );
 }

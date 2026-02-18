@@ -5,7 +5,9 @@ import { ShoppingBag, ChevronDown, Plus, Minus, Check } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function ProductDetailClient({ item }: { item: any }) {
+import { MeatItem } from '@/types';
+
+export default function ProductDetailClient({ item }: { item: MeatItem }) {
     const { addToCart } = useAppContext();
     const [quantity, setQuantity] = useState(1);
     const [cutType, setCutType] = useState('Curry Cut');
@@ -18,7 +20,7 @@ export default function ProductDetailClient({ item }: { item: any }) {
         setIsAdding(true);
         // Add multiple quantity
         for (let i = 0; i < quantity; i++) {
-            addToCart({ ...item, selectedCut: cutType });
+            addToCart(item, cutType);
         }
 
         setTimeout(() => {
@@ -55,7 +57,7 @@ export default function ProductDetailClient({ item }: { item: any }) {
                 <div className="space-y-1">
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Estimated Total</p>
                     <p className="text-5xl font-black text-rose-600 italic tracking-tighter">
-                        ₹{item.price * quantity}
+                        ₹{parseFloat(item.price) * quantity}
                     </p>
                 </div>
             </div>

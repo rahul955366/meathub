@@ -7,3 +7,6 @@ gunicorn
 uvicorn
 python-dotenv
 django-environ
+django-ratelimit
+google-generativeai
+razorpay

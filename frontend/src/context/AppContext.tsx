@@ -1,23 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface User {
-    username: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-}
-
-interface CartItem {
-    id: number;
-    name: string;
-    price: number;
-    quantity: number;
-    image_url: string;
-    category: string;
-    selectedCut?: string;
-}
+import { User, CartItem, MeatItem } from '../types';
+import toast from 'react-hot-toast';
 
 interface AppContextType {
     user: User | null;
@@ -25,11 +10,13 @@ interface AppContextType {
     searchQuery: string;
     token: string | null;
     setSearchQuery: (query: string) => void;
-    addToCart: (item: any) => void;
+    addToCart: (item: MeatItem, selectedCut?: string) => void;
     removeFromCart: (id: number, selectedCut?: string) => void;
     clearCart: () => void;
-    login: (token: string, userData: any) => void;
+    login: (token: string, userData: User) => void;
     logout: () => void;
+    isCartOpen: boolean;
+    setIsCartOpen: (open: boolean) => void;
     totalAmount: number;
     cartCount: number;
 }
@@ -41,6 +28,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [token, setToken] = useState<string | null>(null);
+    const [isCartOpen, setIsCartOpen] = useState(false);
 
     // Initial load from localStorage
     useEffect(() => {
@@ -49,8 +37,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const savedCart = localStorage.getItem('meathub_cart');
 
         if (savedToken) setToken(savedToken);
-        if (savedUser) setUser(JSON.parse(savedUser));
-        if (savedCart) setCart(JSON.parse(savedCart));
+        if (savedUser) {
+            try {
+                setUser(JSON.parse(savedUser));
+            } catch (e) {
+                console.error("Failed to parse user data", e);
+            }
+        }
+        if (savedCart) {
+            try {
+                setCart(JSON.parse(savedCart));
+            } catch (e) {
+                console.error("Failed to parse cart data", e);
+            }
+        }
     }, []);
 
     // Save cart to localStorage on change
@@ -58,7 +58,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('meathub_cart', JSON.stringify(cart));
     }, [cart]);
 
-    const login = (newToken: string, userData: any) => {
+    const login = (newToken: string, userData: User) => {
         setToken(newToken);
         setUser(userData);
         localStorage.setItem('meathub_token', newToken);
@@ -70,52 +70,64 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         localStorage.removeItem('meathub_token');
         localStorage.removeItem('meathub_user');
+        localStorage.removeItem('meathub_cart'); // Optional: clear cart on logout
+        setCart([]);
     };
 
-    const addToCart = (product: any) => {
+    const addToCart = (product: MeatItem, selectedCut: string = 'Curry Cut') => {
+        // Multi-Butcher Restriction Removed
+        // We now allow adding items from different butchers and split the order at checkout.
+
         setCart(prev => {
-            const existing = prev.find(item =>
-                item.id === product.id &&
-                (item.selectedCut === product.selectedCut)
+            // Find if item with same ID and Cut exists
+            const existingIndex = prev.findIndex(item =>
+                item.meat_item_id === product.id && item.selectedCut === selectedCut
             );
-            if (existing) {
-                return prev.map(item =>
-                    (item.id === product.id && item.selectedCut === product.selectedCut)
-                        ? { ...item, quantity: item.quantity + 1 }
-                        : item
-                );
+
+            if (existingIndex > -1) {
+                const newCart = [...prev];
+                newCart[existingIndex].quantity += 1;
+                toast.success(`Increased ${product.name} quantity`);
+                return newCart;
             }
-            return [...prev, { ...product, quantity: 1, selectedCut: product.selectedCut || 'Curry Cut' }];
+
+            // Create new CartItem from MeatItem
+            const newItem: CartItem = {
+                id: Date.now(), // Generate a temporary unique ID for the cart entry
+                meat_item_id: product.id,
+                name: product.name,
+                price: parseFloat(product.price), // Ensure number
+                quantity: 1,
+                image_url: product.image_url,
+                butcher_id: product.butcher,
+                category: product.category,
+                selectedCut: selectedCut
+            };
+
+            toast.success(`Added ${product.name} to bag`);
+            return [...prev, newItem];
         });
+        setIsCartOpen(true); // Auto-open cart on add
     };
 
-    const removeFromCart = (id: number, selectedCut?: string) => {
+    const removeFromCart = (meatItemId: number, selectedCut?: string) => {
         setCart(prev => {
             if (selectedCut) {
-                // Remove a specific item instance (id + selectedCut)
-                const indexToRemove = prev.findIndex(item => item.id === id && item.selectedCut === selectedCut);
-                if (indexToRemove > -1) {
-                    const newCart = [...prev];
-                    newCart.splice(indexToRemove, 1);
-                    return newCart;
-                }
-                return prev; // Item not found
-            } else {
-                // Remove all items with the given id, regardless of selectedCut
-                return prev.filter(item => item.id !== id);
+                return prev.filter(item => !(item.meat_item_id === meatItemId && item.selectedCut === selectedCut));
             }
+            return prev.filter(item => item.meat_item_id !== meatItemId);
         });
     };
 
     const clearCart = () => setCart([]);
 
-    const totalAmount = cart.reduce((acc, item) => acc + (Number(item.price) * item.quantity), 0);
+    const totalAmount = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     return (
         <AppContext.Provider value={{
-            user, cart, searchQuery, token,
-            setSearchQuery, addToCart, removeFromCart, clearCart,
+            user, cart, searchQuery, token, isCartOpen,
+            setIsCartOpen, setSearchQuery, addToCart, removeFromCart, clearCart,
             login, logout, totalAmount, cartCount
         }}>
             {children}

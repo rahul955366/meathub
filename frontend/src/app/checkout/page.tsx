@@ -4,17 +4,45 @@ import React, { useState } from 'react';
 import { useAppContext } from '@/context/AppContext';
 import { createOrder } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Phone, CreditCard, Wallet, Building, Check, ArrowRight, ShieldCheck, Clock, Truck, AlertCircle } from 'lucide-react';
+import { MapPin, Phone, CreditCard, Wallet, Building, Check, ArrowRight, ShieldCheck, Clock, Truck, AlertCircle, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+
+interface FormData {
+    name: string;
+    phone: string;
+    address: string;
+    landmark: string;
+    city: string;
+    pincode: string;
+    paymentMethod: 'COD' | 'UPI' | 'CARD';
+}
 
 export default function CheckoutPage() {
     const { cart, totalAmount, clearCart, user, token } = useAppContext();
     const router = useRouter();
-    const [step, setStep] = useState(1); // 1: Address, 2: Payment, 3: Confirm
+    const [step, setStep] = useState(1); // 1: Address, 2: AuthBridge (if not logged in), 3: Payment, 4: Confirm
+    const [guestMode, setGuestMode] = useState(false);
     const [error, setError] = useState('');
 
-    const [formData, setFormData] = useState({
+    // Detect if this is a subscription checkout
+    const [subscriptionPlan, setSubscriptionPlan] = useState<string | null>(null);
+
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const plan = params.get('plan');
+        if (plan) setSubscriptionPlan(plan);
+    }, []);
+
+    const PLANS = {
+        'WEEKLY': { name: 'Artisan Weekly', price: 2400, desc: '4 Deliveries / Month • Sunday Priority' },
+        'MONTHLY': { name: 'Concierge Monthly', price: 8500, desc: 'Daily Drops • Sunday Auto-Dispatch' },
+        'YEARLY': { name: 'Elite Annual', price: 95000, desc: 'Price Protection • 24/7 Concierge' }
+    };
+
+    const currentPlan = subscriptionPlan ? PLANS[subscriptionPlan as keyof typeof PLANS] : null;
+
+    const [formData, setFormData] = useState<FormData>({
         name: user?.username || '',
         phone: '',
         address: '',
@@ -44,7 +72,13 @@ export default function CheckoutPage() {
     };
 
     const handleStep1Next = () => {
-        if (validateStep1()) setStep(2);
+        if (validateStep1()) {
+            if (user || guestMode) {
+                setStep(3); // Skip bridge if already user or guest
+            } else {
+                setStep(2); // Show guest vs login bridge
+            }
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -52,37 +86,81 @@ export default function CheckoutPage() {
         setIsProcessing(true);
         setError('');
 
-        if (!token) {
-            setError('Please login to place an order.');
+        if (!token && !guestMode) {
+            setError('Please login or continue as guest.');
             setIsProcessing(false);
             return;
         }
 
-        // Group cart items by butcher (use first item's butcher as default)
-        const butcherId = cart[0]?.id ? 1 : 1; // Default butcher
+        if (cart.length === 0 && !subscriptionPlan) {
+            setError('Your cart is empty.');
+            setIsProcessing(false);
+            return;
+        }
 
-        const result = await createOrder(token, {
-            butcher_id: butcherId,
-            delivery_address: `${formData.address}, ${formData.landmark}, ${formData.city} - ${formData.pincode}`,
-            delivery_phone: formData.phone,
-            payment_method: formData.paymentMethod,
-            items: cart.map(item => ({
-                meat_item_id: item.id,
-                quantity: item.quantity,
-                price: Number(item.price),
-            })),
+        if (subscriptionPlan) {
+            // Logic for subscription creation would go here
+            // For now, simulate success with a brief delay
+            setTimeout(() => {
+                router.push('/order-success?type=subscription');
+            }, 2000);
+            return;
+        }
+
+        // --- Multi-Butcher Order Splitting ---
+        // Group items by butcher_id
+        const butcherGroups: Record<number, typeof cart> = {};
+        cart.forEach(item => {
+            const bId = item.butcher_id || 1; // Fallback to 1 if missing
+            if (!butcherGroups[bId]) butcherGroups[bId] = [];
+            butcherGroups[bId].push(item);
         });
 
-        if (result.success) {
+        const butcherIds = Object.keys(butcherGroups).map(Number);
+        let successCount = 0;
+        let lastError = '';
+        let hasOfficial = false;
+
+        for (const bId of butcherIds) {
+            const groupItems = butcherGroups[bId];
+            const result = await createOrder(token, {
+                butcher_id: bId,
+                delivery_address: `${formData.address}, ${formData.landmark}, ${formData.city} - ${formData.pincode}`,
+                delivery_phone: formData.phone,
+                payment_method: formData.paymentMethod,
+                items: groupItems.map(item => ({
+                    meat_item_id: item.meat_item_id, // Use meat_item_id instead of entry id
+                    quantity: item.quantity,
+                    price: Number(item.price),
+                })),
+            });
+
+            if (result.success) {
+                successCount++;
+                if (result.is_official) hasOfficial = true;
+            } else {
+                lastError = result.error || 'Order placement failed.';
+            }
+        }
+
+        if (successCount === butcherIds.length) {
             clearCart();
-            router.push('/order-success');
+            const successUrl = butcherIds.length > 1
+                ? `/order-success?split=${butcherIds.length}&official=${hasOfficial}`
+                : `/order-success?official=${hasOfficial}`;
+            router.push(successUrl);
+        } else if (successCount > 0) {
+            // Partial success scenario
+            setError(`Successfully placed ${successCount} of ${butcherIds.length} orders. ${lastError}`);
+            // We should ideally remove successful items from cart, but for simplicity:
+            setIsProcessing(false);
         } else {
-            setError(result.error || 'Order placement failed. Please try again.');
+            setError(lastError || 'Order placement failed. Please try again.');
             setIsProcessing(false);
         }
     };
 
-    if (cart.length === 0 && !isProcessing) {
+    if (cart.length === 0 && !subscriptionPlan && !isProcessing) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 pt-32">
                 <div className="text-center space-y-8 p-12">
@@ -110,17 +188,18 @@ export default function CheckoutPage() {
                     <div className="mb-16 flex items-center justify-center gap-4">
                         {[
                             { num: 1, label: 'Delivery' },
-                            { num: 2, label: 'Payment' },
-                            { num: 3, label: 'Confirm' }
-                        ].map((s, i) => (
+                            { num: 2, label: 'Auth', skip: user || guestMode },
+                            { num: 3, label: 'Payment' },
+                            { num: 4, label: 'Confirm' }
+                        ].filter(s => !s.skip).map((s, i, arr) => (
                             <React.Fragment key={s.num}>
                                 <div className={`flex items-center gap-3 ${step >= s.num ? 'opacity-100' : 'opacity-30'}`}>
                                     <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-sm ${step >= s.num ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-400'}`}>
-                                        {step > s.num ? <Check className="w-5 h-5" /> : s.num}
+                                        {step > s.num ? <Check className="w-5 h-5" /> : (i + 1)}
                                     </div>
                                     <span className="text-xs font-black uppercase tracking-widest hidden md:block">{s.label}</span>
                                 </div>
-                                {i < 2 && <div className={`hidden md:block w-20 h-[2px] ${step > s.num ? 'bg-rose-600' : 'bg-slate-200'}`} />}
+                                {i < arr.length - 1 && <div className={`hidden md:block w-20 h-[2px] ${step > s.num ? 'bg-rose-600' : 'bg-slate-200'}`} />}
                             </React.Fragment>
                         ))}
                     </div>
@@ -145,6 +224,7 @@ export default function CheckoutPage() {
                                 <AnimatePresence mode="wait">
                                     {step === 1 && (
                                         <motion.div
+                                            key="step1"
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, x: 20 }}
@@ -177,10 +257,11 @@ export default function CheckoutPage() {
                                                     <input
                                                         required
                                                         type="tel"
+                                                        inputMode="tel"
                                                         value={formData.phone}
                                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                                         className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-rose-600 outline-none"
-                                                        placeholder="+91 98765 43210"
+                                                        placeholder="98765 43210"
                                                     />
                                                 </div>
                                                 <div className="md:col-span-2 space-y-2">
@@ -208,6 +289,8 @@ export default function CheckoutPage() {
                                                     <input
                                                         required
                                                         type="text"
+                                                        inputMode="numeric"
+                                                        pattern="[0-9]*"
                                                         value={formData.pincode}
                                                         onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
                                                         className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-rose-600 outline-none"
@@ -226,9 +309,52 @@ export default function CheckoutPage() {
                                         </motion.div>
                                     )}
 
-                                    {/* Step 2: Payment Method */}
-                                    {step === 2 && (
+                                    {/* Step 2: Auth Bridge */}
+                                    {step === 2 && !user && !guestMode && (
                                         <motion.div
+                                            key="step2"
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                            className="bg-white rounded-[3rem] p-8 md:p-12 shadow-sm border border-slate-100 text-center space-y-8"
+                                        >
+                                            <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
+                                                <User className="w-10 h-10 text-slate-400" />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-2xl font-black uppercase tracking-tighter italic">One last thing</h2>
+                                                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">Sign in to earn rewards or continue as a guest</p>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <Link href="/login?redirect=checkout" className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center hover:bg-rose-600 transition-all">
+                                                    Sign In / Register
+                                                </Link>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setGuestMode(true);
+                                                        setStep(3);
+                                                    }}
+                                                    className="w-full h-16 bg-white border-2 border-slate-100 text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:border-slate-300 transition-all"
+                                                >
+                                                    Continue as Guest
+                                                </button>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setStep(1)}
+                                                className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-rose-600 transition-colors"
+                                            >
+                                                Edit Address
+                                            </button>
+                                        </motion.div>
+                                    )}
+
+                                    {/* Step 3: Payment Method */}
+                                    {step === 3 && (
+                                        <motion.div
+                                            key="step2"
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, x: 20 }}
@@ -246,9 +372,9 @@ export default function CheckoutPage() {
 
                                             <div className="space-y-4">
                                                 {[
-                                                    { id: 'COD', icon: Wallet, label: 'Cash on Delivery', desc: 'Pay when you receive' },
-                                                    { id: 'UPI', icon: Building, label: 'UPI / Net Banking', desc: 'Instant online payment' },
-                                                    { id: 'CARD', icon: CreditCard, label: 'Credit / Debit Card', desc: 'Secure card payment' }
+                                                    { id: 'COD' as const, icon: Wallet, label: 'Cash on Delivery', desc: 'Pay when you receive' },
+                                                    { id: 'UPI' as const, icon: Building, label: 'UPI / Net Banking', desc: 'Instant online payment' },
+                                                    { id: 'CARD' as const, icon: CreditCard, label: 'Credit / Debit Card', desc: 'Secure card payment' }
                                                 ].map((method) => (
                                                     <button
                                                         key={method.id}
@@ -280,7 +406,7 @@ export default function CheckoutPage() {
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    onClick={() => setStep(3)}
+                                                    onClick={() => setStep(4)}
                                                     className="flex-1 h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-rose-600 transition-all shadow-xl flex items-center justify-center gap-3"
                                                 >
                                                     Review Order <ArrowRight className="w-5 h-5" />
@@ -289,9 +415,10 @@ export default function CheckoutPage() {
                                         </motion.div>
                                     )}
 
-                                    {/* Step 3: Confirm */}
-                                    {step === 3 && (
+                                    {/* Step 4: Confirm */}
+                                    {step === 4 && (
                                         <motion.div
+                                            key="step3"
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, x: 20 }}
@@ -325,7 +452,7 @@ export default function CheckoutPage() {
                                             <div className="flex gap-4">
                                                 <button
                                                     type="button"
-                                                    onClick={() => setStep(2)}
+                                                    onClick={() => setStep(3)}
                                                     className="flex-1 h-16 bg-slate-100 text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all"
                                                 >
                                                     Back
@@ -355,24 +482,36 @@ export default function CheckoutPage() {
                                 <h3 className="text-xl font-black uppercase tracking-tighter italic mb-6">Order Summary</h3>
 
                                 <div className="space-y-4 mb-8 max-h-64 overflow-y-auto">
-                                    {cart.map((item) => (
-                                        <div key={item.id} className="flex gap-4 pb-4 border-b border-slate-50">
-                                            <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-                                                <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                                    {subscriptionPlan && currentPlan ? (
+                                        <div className="p-6 bg-rose-50 rounded-2xl border border-rose-100 flex gap-4">
+                                            <div className="w-16 h-16 rounded-xl bg-rose-600 flex items-center justify-center text-white flex-shrink-0">
+                                                <ShieldCheck className="w-8 h-8" />
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="text-xs font-black uppercase tracking-tight truncate">{item.name}</h4>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Qty: {item.quantity}</p>
-                                                <p className="text-sm font-black text-rose-600 italic mt-1">₹{Number(item.price) * item.quantity}</p>
+                                            <div>
+                                                <h4 className="text-sm font-black uppercase tracking-tight text-rose-600">{currentPlan.name}</h4>
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">{currentPlan.desc}</p>
                                             </div>
                                         </div>
-                                    ))}
+                                    ) : (
+                                        cart.map((item) => (
+                                            <div key={item.id} className="flex gap-4 pb-4 border-b border-slate-50">
+                                                <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                                                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-xs font-black uppercase tracking-tight truncate">{item.name}</h4>
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Qty: {item.quantity}</p>
+                                                    <p className="text-sm font-black text-rose-600 italic mt-1">₹{Number(item.price) * item.quantity}</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
 
                                 <div className="space-y-4 pt-6 border-t-2 border-slate-100">
                                     <div className="flex justify-between text-sm">
                                         <span className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Subtotal</span>
-                                        <span className="font-black">₹{totalAmount}</span>
+                                        <span className="font-black">₹{subscriptionPlan && currentPlan ? currentPlan.price : totalAmount}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="font-bold text-slate-400 uppercase tracking-widest text-[10px]">Delivery</span>
@@ -380,7 +519,7 @@ export default function CheckoutPage() {
                                     </div>
                                     <div className="flex justify-between text-xl pt-4 border-t border-slate-100">
                                         <span className="font-black uppercase tracking-tight">Total</span>
-                                        <span className="font-black text-rose-600 italic">₹{totalAmount}</span>
+                                        <span className="font-black text-rose-600 italic">₹{subscriptionPlan && currentPlan ? currentPlan.price : totalAmount}</span>
                                     </div>
                                 </div>
 

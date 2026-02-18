@@ -1,46 +1,56 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, MapPin, Clock, Package, ArrowRight, Download, Share2 } from 'lucide-react';
+import { CheckCircle2, MapPin, Clock, Package, ArrowRight, Download, Share2, Video } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import confetti from 'canvas-confetti';
 
 export default function OrderSuccessPage() {
-    const [orderNumber] = useState(`MH${Date.now().toString().slice(-8)}`);
+    const searchParams = useSearchParams();
+    const isOfficial = searchParams.get('official') === 'true';
+
+    // Generate a memoized order number once
+    const orderNumber = useMemo(() => `MH${Date.now().toString().slice(-8)}`, []);
 
     useEffect(() => {
-        // Celebration confetti
+        // Celebration confetti effect
         const duration = 3000;
-        const end = Date.now() + duration;
-
+        const animationEnd = Date.now() + duration;
         const colors = ['#e11d48', '#0f172a', '#ffffff'];
 
-        (function frame() {
+        const runAnimation = () => {
+            const timeLeft = animationEnd - Date.now();
+
+            if (timeLeft <= 0) return;
+
+            const particleCount = 2 * (timeLeft / duration);
+
             confetti({
-                particleCount: 3,
+                particleCount,
                 angle: 60,
                 spread: 55,
                 origin: { x: 0 },
                 colors: colors
             });
             confetti({
-                particleCount: 3,
+                particleCount,
                 angle: 120,
                 spread: 55,
                 origin: { x: 1 },
                 colors: colors
             });
 
-            if (Date.now() < end) {
-                requestAnimationFrame(frame);
-            }
-        }());
+            requestAnimationFrame(runAnimation);
+        };
+
+        runAnimation();
     }, []);
 
     return (
         <main className="min-h-screen bg-gradient-to-br from-slate-50 to-white pt-32 pb-24 relative overflow-hidden">
-            {/* Decorative Background */}
+            {/* Decorative Background Elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-rose-100 opacity-20 rounded-full blur-3xl" />
                 <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-100 opacity-20 rounded-full blur-3xl" />
@@ -49,7 +59,7 @@ export default function OrderSuccessPage() {
             <div className="container mx-auto px-4 relative z-10">
                 <div className="max-w-3xl mx-auto space-y-12">
 
-                    {/* Success Animation */}
+                    {/* Success Animation Logo */}
                     <motion.div
                         initial={{ scale: 0, rotate: -180 }}
                         animate={{ scale: 1, rotate: 0 }}
@@ -61,7 +71,7 @@ export default function OrderSuccessPage() {
                         </div>
                     </motion.div>
 
-                    {/* Success Message */}
+                    {/* Success Header */}
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -77,7 +87,7 @@ export default function OrderSuccessPage() {
                         </p>
                     </motion.div>
 
-                    {/* Order Details Card */}
+                    {/* Order Details Summary Card */}
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -86,14 +96,21 @@ export default function OrderSuccessPage() {
                     >
                         <div className="flex items-center justify-between mb-8 pb-8 border-b-2 border-slate-50">
                             <div>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Order Number</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Order Reference</p>
                                 <p className="text-3xl font-black text-slate-900 tracking-tighter italic">#{orderNumber}</p>
                             </div>
                             <div className="flex gap-3">
-                                <button className="w-12 h-12 rounded-xl bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all flex items-center justify-center">
+                                <button className="w-12 h-12 rounded-xl bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all flex items-center justify-center" aria-label="Download Receipt">
                                     <Download className="w-5 h-5" />
                                 </button>
-                                <button className="w-12 h-12 rounded-xl bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all flex items-center justify-center">
+                                <button
+                                    onClick={() => {
+                                        const text = `I just ordered premium cuts from MeatHub! Order #${orderNumber}. Check them out: ${window.location.origin}`;
+                                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                                    }}
+                                    className="w-12 h-12 rounded-xl bg-slate-50 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all flex items-center justify-center"
+                                    aria-label="Share via WhatsApp"
+                                >
                                     <Share2 className="w-5 h-5" />
                                 </button>
                             </div>
@@ -104,10 +121,10 @@ export default function OrderSuccessPage() {
                                 <div className="w-14 h-14 rounded-2xl bg-rose-50 flex items-center justify-center">
                                     <Clock className="w-6 h-6 text-rose-600" />
                                 </div>
-                                <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Estimated Delivery</p>
-                                    <p className="text-lg font-black text-slate-900 uppercase tracking-tight">45-60 Minutes</p>
-                                    <p className="text-xs text-slate-400 font-bold mt-1">Bio-Secure Cold-Chain Active</p>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">ETA</p>
+                                    <p className="text-lg font-black text-slate-900 uppercase tracking-tight">45-60 Mins</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Cold-Chain Active</p>
                                 </div>
                             </div>
 
@@ -115,10 +132,10 @@ export default function OrderSuccessPage() {
                                 <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center">
                                     <Package className="w-6 h-6 text-emerald-600" />
                                 </div>
-                                <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Packaging Status</p>
-                                    <p className="text-lg font-black text-emerald-600 uppercase tracking-tight">Preparing Fresh</p>
-                                    <p className="text-xs text-slate-400 font-bold mt-1">Hygienic Vacuum Sealed</p>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
+                                    <p className="text-lg font-black text-emerald-600 uppercase tracking-tight">Preparing</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Vacuum Sealed</p>
                                 </div>
                             </div>
 
@@ -126,16 +143,16 @@ export default function OrderSuccessPage() {
                                 <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center">
                                     <MapPin className="w-6 h-6 text-blue-600" />
                                 </div>
-                                <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Delivery Location</p>
-                                    <p className="text-lg font-black text-slate-900 uppercase tracking-tight">KPHB Phase 3</p>
-                                    <p className="text-xs text-slate-400 font-bold mt-1">Auto-Dispatch Enabled</p>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Zone</p>
+                                    <p className="text-lg font-black text-slate-900 uppercase tracking-tight">Local</p>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Auto-Dispatch</p>
                                 </div>
                             </div>
                         </div>
                     </motion.div>
 
-                    {/* Live Tracking Notice */}
+                    {/* Live Tracking Banner */}
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -147,10 +164,10 @@ export default function OrderSuccessPage() {
                             <div className="space-y-4 text-center md:text-left">
                                 <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
                                     <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Live Updates</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Live Tracking</span>
                                 </div>
-                                <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic">Track Your Order in Real-Time</h3>
-                                <p className="text-white/60 text-sm font-bold uppercase tracking-wide">SMS + WhatsApp notifications enabled</p>
+                                <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic">Watch Your Meat Come Home</h3>
+                                <p className="text-white/60 text-sm font-bold uppercase tracking-wide">SMS + WhatsApp alerts enabled</p>
                             </div>
                             <button className="h-16 px-10 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-rose-600 hover:text-white transition-all shadow-2xl flex items-center gap-3">
                                 Track Now <ArrowRight className="w-5 h-5" />
@@ -158,7 +175,79 @@ export default function OrderSuccessPage() {
                         </div>
                     </motion.div>
 
-                    {/* Action Buttons */}
+                    {/* USP: Video Proof Section - ONLY FOR OFFICIAL STORE */}
+                    {isOfficial ? (
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.8 }}
+                            className="bg-rose-50 border-2 border-rose-100 rounded-[3rem] p-8 md:p-12 space-y-8 shadow-xl shadow-rose-100/50"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-rose-600 rounded-2xl flex items-center justify-center shadow-lg shadow-rose-200">
+                                        <Video className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-black uppercase tracking-tighter italic">Live Cutting <span className="text-rose-600">Proof</span></h3>
+                                        <p className="text-[10px] text-rose-400 font-bold uppercase tracking-widest mt-1">Official MeatHub Verification</p>
+                                    </div>
+                                </div>
+                                <div className="hidden md:flex bg-white px-4 py-2 rounded-xl border border-rose-100 items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping" />
+                                    <span className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Official Store USP</span>
+                                </div>
+                            </div>
+
+                            <div className="aspect-video bg-slate-900 rounded-[2.5rem] relative overflow-hidden group border-4 border-white shadow-2xl">
+                                <iframe
+                                    className="w-full h-full"
+                                    src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0"
+                                    title="MeatHub Cutting Proof"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                />
+                                <div className="absolute top-4 right-4 z-20">
+                                    <div className="bg-emerald-500 text-white px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl border-2 border-white">
+                                        <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">LIVE VERIFIED</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white p-4 rounded-2xl border border-rose-100 space-y-1">
+                                    <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Transparency</p>
+                                    <p className="text-xs font-bold text-slate-700">100% Real Video Proof</p>
+                                </div>
+                                <div className="bg-white p-4 rounded-2xl border border-rose-100 space-y-1">
+                                    <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Verification</p>
+                                    <p className="text-xs font-bold text-slate-700">Scan QR on Delivery</p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ) : (
+                        /* Marketplace Quality Banner */
+                        <motion.div
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.8 }}
+                            className="bg-slate-50 border-2 border-slate-100 rounded-[3rem] p-10 flex flex-col md:flex-row items-center gap-8"
+                        >
+                            <div className="w-20 h-20 rounded-3xl bg-white flex items-center justify-center shadow-lg border border-slate-100 flex-shrink-0">
+                                <Package className="w-10 h-10 text-slate-300" />
+                            </div>
+                            <div className="flex-1 text-center md:text-left space-y-2">
+                                <h3 className="text-xl font-black uppercase tracking-tighter italic">Marketplace Quality Assured</h3>
+                                <p className="text-sm text-slate-500 font-bold uppercase tracking-wide">Every butcher on MeatHub is hand-verified for hygiene and quality standards.</p>
+                            </div>
+                            <div className="px-6 py-3 bg-white rounded-2xl border border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                Standard Delivery
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* Navigation Actions */}
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -166,14 +255,14 @@ export default function OrderSuccessPage() {
                         className="flex flex-col md:flex-row gap-4"
                     >
                         <Link href="/butchers" className="flex-1 h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-rose-600 transition-all shadow-xl flex items-center justify-center gap-3">
-                            Order Again <ArrowRight className="w-5 h-5" />
+                            Order More <ArrowRight className="w-5 h-5" />
                         </Link>
                         <Link href="/dashboard/subscriptions" className="flex-1 h-16 bg-slate-100 text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all flex items-center justify-center gap-3">
                             My Orders
                         </Link>
                     </motion.div>
 
-                    {/* Artisan Seal */}
+                    {/* Quality Assurance Footer */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -182,10 +271,10 @@ export default function OrderSuccessPage() {
                     >
                         <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-300">
                             <div className="h-px w-12 bg-slate-200" />
-                            Certified Fresh
+                            Authentic & Certified
                             <div className="h-px w-12 bg-slate-200" />
                         </div>
-                        <p className="text-slate-400 text-xs font-bold italic">Prepared by FSSAI Certified Master Butchers</p>
+                        <p className="text-slate-400 text-xs font-bold italic">Prepared in bio-secure facilities by master artisans.</p>
                     </motion.div>
 
                 </div>

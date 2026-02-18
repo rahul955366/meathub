@@ -1,19 +1,40 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, ShieldCheck, MapPin, Youtube, ShoppingBag, Clock, ChevronRight, Video, Target, Heart } from 'lucide-react';
+import { Play, ShieldCheck, MapPin, ShoppingBag, ChevronRight, Video, Target, Heart } from 'lucide-react';
 import Link from 'next/link';
+import { getOfficialItems } from '@/lib/api';
+import { MeatItem } from '@/types';
 
 export default function StorePage() {
-    const [activeTab, setActiveTab] = useState('LIVE'); // LIVE, PRODUCTS, ABOUT
+    const [activeTab, setActiveTab] = useState('LIVE'); // LIVE, CATALOG, STANDARDS
+    const [items, setItems] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [filter, setFilter] = useState('ALL');
 
-    const STOCKS = [
-        { name: 'Country Chicken (Natu Kodi)', price: '₹650', weight: '1kg+', img: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=800&q=80&sig=stock_1', status: 'In Stock' },
-        { name: 'Potlam Mutton', price: '₹950', weight: '500g', img: 'https://images.unsplash.com/photo-1603048297172-c923170e2801?auto=format&fit=crop&w=800&q=80&sig=stock_2', status: 'Premium' },
-        { name: 'Standard Broiler', price: '₹280', weight: '1kg', img: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80&sig=stock_3', status: 'Fresh' },
-        { name: 'Artisanal Mutton', price: '₹880', weight: '1kg', img: 'https://images.unsplash.com/photo-1551028150-64b9f398f678?auto=format&fit=crop&w=800&q=80&sig=stock_4', status: 'Hygienic' },
-    ];
+    useEffect(() => {
+        async function loadData() {
+            setLoading(true);
+            try {
+                const data = await getOfficialItems();
+                setItems(data);
+            } catch (err) {
+                console.error("Failed to fetch store items", err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadData();
+    }, []);
+
+    const filteredItems = items.filter(item => {
+        if (filter === 'ALL') return true;
+        if (filter === 'POTLAM') return item.name.toUpperCase().includes('POTLAM');
+        if (filter === 'CHICKEN') return item.category.toUpperCase() === 'CHICKEN';
+        if (filter === 'MUTTON') return item.category.toUpperCase() === 'MUTTON';
+        return item.category.toUpperCase() === filter;
+    });
 
     return (
         <main className="min-h-screen bg-slate-950 text-white">
@@ -106,7 +127,6 @@ export default function StorePage() {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                    {/* Bird Yard Stream */}
                                     <div className="group relative aspect-video rounded-[3.5rem] overflow-hidden border border-white/10 bg-slate-900 shadow-2xl">
                                         <div className="absolute inset-0 bg-slate-950/20 z-10" />
                                         <img
@@ -125,7 +145,6 @@ export default function StorePage() {
                                         </div>
                                     </div>
 
-                                    {/* Butchery Stream */}
                                     <div className="group relative aspect-video rounded-[3.5rem] overflow-hidden border border-white/10 bg-slate-900 shadow-2xl">
                                         <div className="absolute inset-0 bg-slate-950/20 z-10" />
                                         <img
@@ -162,34 +181,52 @@ export default function StorePage() {
                                     </div>
                                     <div className="flex gap-4">
                                         {['ALL', 'CHICKEN', 'MUTTON', 'POTLAM'].map(f => (
-                                            <button key={f} className="px-6 py-3 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all">{f}</button>
+                                            <button
+                                                key={f}
+                                                onClick={() => setFilter(f)}
+                                                className={`px-6 py-3 border rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${filter === f ? 'bg-white text-slate-950' : 'border-white/10 hover:bg-white/5'}`}
+                                            >
+                                                {f}
+                                            </button>
                                         ))}
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                                    {STOCKS.map((item, i) => (
-                                        <div key={i} className="group bg-white/5 rounded-[2.5rem] p-8 border border-white/5 hover:border-rose-600/50 transition-all duration-500 shadow-xl space-y-6">
-                                            <div className="aspect-square rounded-3xl overflow-hidden relative">
-                                                <img src={item.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-                                                <div className="absolute top-4 right-4 bg-slate-950/80 backdrop-blur px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-500">
-                                                    {item.status}
+                                    {loading ? (
+                                        [1, 2, 3, 4].map(i => (
+                                            <div key={i} className="aspect-square bg-slate-900 animate-pulse rounded-[2.5rem]" />
+                                        ))
+                                    ) : filteredItems.length > 0 ? (
+                                        filteredItems.map((item) => (
+                                            <div key={item.id} className="group bg-white/5 rounded-[2.5rem] p-8 border border-white/5 hover:border-rose-600/50 transition-all duration-500 shadow-xl space-y-6">
+                                                <div className="aspect-square rounded-3xl overflow-hidden relative">
+                                                    <img src={item.image_url || 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80&sig=stock'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.name} />
+                                                    <div className="absolute top-4 right-4 bg-slate-950/80 backdrop-blur px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-rose-500">
+                                                        {item.category}
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <div className="space-y-1">
+                                                        <h3 className="text-xl font-black uppercase italic tracking-tight truncate">{item.name}</h3>
+                                                        <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{item.butcher_name}</p>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <p className="text-2xl font-black text-rose-600 italic leading-none">₹{item.price}</p>
+                                                        <Link href={`/butchers/${item.butcher}?q=${item.name}`}>
+                                                            <button className="w-12 h-12 bg-white text-slate-950 rounded-2xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-2xl active:scale-90">
+                                                                <ShoppingBag className="w-5 h-5" />
+                                                            </button>
+                                                        </Link>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="space-y-4">
-                                                <div className="space-y-1">
-                                                    <h3 className="text-xl font-black uppercase italic tracking-tight">{item.name}</h3>
-                                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Selected Breed Source</p>
-                                                </div>
-                                                <div className="flex items-center justify-between">
-                                                    <p className="text-2xl font-black text-rose-600 italic leading-none">{item.price}</p>
-                                                    <button className="w-12 h-12 bg-white text-slate-950 rounded-2xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-2xl active:scale-90">
-                                                        <ShoppingBag className="w-5 h-5" />
-                                                    </button>
-                                                </div>
-                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="col-span-full py-20 text-center opacity-30 uppercase font-black italic tracking-widest">
+                                            No Stock Available
                                         </div>
-                                    ))}
+                                    )}
                                 </div>
                             </motion.div>
                         )}

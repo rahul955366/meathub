@@ -2,15 +2,16 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Star, Flame, ArrowRight } from 'lucide-react';
+import { Flame, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import ProductCard from './ProductCard';
+import { MeatItem } from '@/types';
 
-export default function TrendingMeats({ items }: { items: any[] }) {
+export default function TrendingMeats({ items }: { items: MeatItem[] }) {
     // Intelligent Trending: Pick 1 from each main category first, then fill
     const categories = ['CHICKEN', 'MUTTON', 'FISH', 'PRAWNS'];
-    const diverseTrending: any[] = [];
-    const usedIds = new Set();
+    const diverseTrending: MeatItem[] = [];
+    const usedIds = new Set<number>();
     const cleanItems = (items || []).filter(item => !['PET', 'GYM'].includes(item.category.toUpperCase()));
 
     // 1. Pick one from each category

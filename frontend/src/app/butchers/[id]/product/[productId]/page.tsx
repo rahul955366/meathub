@@ -1,7 +1,7 @@
 import { getButcher, getMeatItem } from '@/lib/api';
 import { ChevronLeft, ShoppingBag, ShieldCheck, MapPin, Clock, Star } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { Butcher, MeatItem } from '@/types';
 import ProductDetailClient from './ProductDetailClient';
 
 export default async function ProductDetailPage({
@@ -10,11 +10,21 @@ export default async function ProductDetailPage({
     params: { id: string, productId: string }
 }) {
     const { id, productId } = await params;
-    const butcher = await getButcher(id);
-    const item = await getMeatItem(productId);
+
+    const [butcher, item] = await Promise.all([
+        getButcher(id),
+        getMeatItem(productId)
+    ]);
 
     if (!butcher || !item) {
-        return <div className="min-h-screen flex items-center justify-center font-black uppercase text-slate-400">Inventory Log Error.</div>;
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="text-center">
+                    <h1 className="text-4xl font-black text-slate-300 uppercase tracking-widest mb-4 italic">Inventory Log Error.</h1>
+                    <Link href="/butchers" className="text-rose-600 font-bold hover:underline uppercase tracking-widest text-xs">Return to Shop List</Link>
+                </div>
+            </div>
+        );
     }
 
     return (

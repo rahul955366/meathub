@@ -2,13 +2,14 @@ import { getMeatItems } from '@/lib/api';
 import ProductList from '@/components/ProductList';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
+import { MeatItem } from '@/types';
 
 export default async function CategoryPage({ params }: { params: { name: string } }) {
     const { name } = await params;
     const allItems = await getMeatItems();
 
-    const categoryItems = allItems.filter(item =>
-        item.category.toLowerCase() === name.toLowerCase()
+    const categoryItems = allItems.filter((item: MeatItem) =>
+        item.category.toLowerCase() === name.toLowerCase() && item.status === 'AVAILABLE'
     );
 
     return (
@@ -41,7 +42,7 @@ export default async function CategoryPage({ params }: { params: { name: string 
                         </div>
                     ) : (
                         <div className="py-40 text-center space-y-6">
-                            <div className="text-9xl opacity-10">Empty</div>
+                            <div className="text-9xl font-black opacity-10 uppercase italic">Empty</div>
                             <h2 className="text-3xl font-black uppercase italic text-slate-300">No {name} items found in our global logs.</h2>
                             <Link href="/" className="inline-block h-16 px-12 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center hover:bg-rose-600 transition-all">
                                 Return to Sourcing

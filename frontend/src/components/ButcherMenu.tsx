@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Search, CheckCircle, ArrowRight, Store, Sparkles, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Search, CheckCircle, ArrowRight, Store, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import MenuItemList from './MenuItemList';
 import ShopMenuPad from './ShopMenuPad';
 import { useAppContext } from '@/context/AppContext';
+import { Butcher, MeatItem } from '@/types';
 
 // Simple X icon for closing modals
 const X = ({ className }: { className?: string }) => (
@@ -14,10 +15,10 @@ const X = ({ className }: { className?: string }) => (
 );
 
 interface ButcherMenuProps {
-    butcher: any;
-    items: any[];
-    allItems?: any[];
-    allButchers?: any[];
+    butcher: Butcher;
+    items: MeatItem[];
+    allItems?: MeatItem[];
+    allButchers?: Butcher[];
     defaultCategory?: string;
 }
 
@@ -28,35 +29,34 @@ export default function ButcherMenu({
     allButchers = [],
     defaultCategory = 'Recommended'
 }: ButcherMenuProps) {
-    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [selectedItem, setSelectedItem] = useState<MeatItem | null>(null);
     const [activeCategory, setActiveCategory] = useState(defaultCategory);
-    const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
     const [localSearch, setLocalSearch] = useState('');
 
-    const { cart, totalAmount, addToCart } = useAppContext();
+    const { totalAmount, addToCart } = useAppContext();
 
     // Group items by category (Current Shop)
     const shopCategories = React.useMemo(() =>
-        Array.from(new Set(items.map((i: any) => i.category || 'Other'))),
+        Array.from(new Set(items.map((i) => i.category || 'Other'))),
         [items]);
     const menuCategories = ['Recommended', ...shopCategories];
 
     // Filter Logic for Main Product Feed
     const filteredItems = React.useMemo(() => {
         const baseFiltered = activeCategory === 'Recommended'
-            ? items.filter((i: any) => i.price > 0).slice(0, 10)
-            : items.filter((i: any) => (i.category || 'Other').toUpperCase() === activeCategory.toUpperCase());
+            ? items.filter((i) => parseFloat(i.price) > 0).slice(0, 10)
+            : items.filter((i) => (i.category || 'Other').toUpperCase() === activeCategory.toUpperCase());
 
-        return baseFiltered.filter((i: any) =>
+        return baseFiltered.filter((i) =>
             i.name.toLowerCase().includes(localSearch.toLowerCase())
         );
     }, [items, activeCategory, localSearch]);
 
     // Cross-Shop Stock Logic
-    const nearbyShopsWithStock = (itemName: string) => {
+    const nearbyShopsWithStock = (itemName: string): Butcher[] => {
         if (!allItems || !allButchers) return [];
         const matchingItems = allItems.filter(
-            (it: any) => it.name.toLowerCase() === itemName.toLowerCase() && it.butcher !== butcher.id
+            (it: MeatItem) => it.name.toLowerCase() === itemName.toLowerCase() && it.butcher !== butcher.id
         );
         const uniqueButcherIds = Array.from(new Set(matchingItems.map(it => it.butcher)));
         return allButchers.filter(b => uniqueButcherIds.includes(b.id)).slice(0, 2);
@@ -85,7 +85,7 @@ export default function ButcherMenu({
                 }
             }
         }
-    }, [defaultCategory, items]);
+    }, [defaultCategory, items, shopCategories]);
 
     return (
         <div className="min-h-screen bg-slate-50 pb-24">
@@ -201,7 +201,7 @@ export default function ButcherMenu({
 
                             <div className="divide-y divide-slate-50">
                                 {filteredItems.length > 0 ? (
-                                    filteredItems.map((item: any) => (
+                                    filteredItems.map((item) => (
                                         <MenuItemList
                                             key={item.id}
                                             item={item}
@@ -255,6 +255,7 @@ export default function ButcherMenu({
                                 <img
                                     src={selectedItem.image_url || 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&sig=scorched_earth_modal'}
                                     className="w-full h-full object-cover"
+                                    alt={selectedItem.name}
                                 />
                                 <button
                                     onClick={() => setSelectedItem(null)}
@@ -301,7 +302,7 @@ export default function ButcherMenu({
 
             {/* CART BAR */}
             <AnimatePresence>
-                {cart.length > 0 && (
+                {totalAmount > 0 && (
                     <motion.div
                         initial={{ y: 100 }}
                         animate={{ y: 0 }}

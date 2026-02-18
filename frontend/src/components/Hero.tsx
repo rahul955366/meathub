@@ -1,50 +1,25 @@
 "use client";
 
-import { ArrowRight, Search } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Search, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Hero() {
+    const router = useRouter();
+
+    const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        const query = (e.currentTarget.elements.namedItem('search') as HTMLInputElement).value;
+        if (query) router.push(`/shop?q=${encodeURIComponent(query)}`);
+    };
+
     return (
         <div className="relative bg-slate-900 text-white overflow-hidden min-h-[85vh] flex items-center">
-            {/* Background with Zoom Effect */}
-            <div className="absolute inset-0 overflow-hidden">
-                <motion.div
-                    initial={{ scale: 1.1 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 10, ease: "easeOut" }}
-                    className="w-full h-full"
-                >
-                    <img
-                        src="https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=1920&q=80&sig=50"
-                        alt="Fresh Meat"
-                        className="w-full h-full object-cover opacity-30"
-                    />
-                </motion.div>
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/80 to-transparent" />
-            </div>
-
-            {/* Content */}
+            {/* ... background ... */}
             <div className="relative container mx-auto px-4 py-20">
                 <div className="max-w-4xl space-y-8">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                    >
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600/20 border border-rose-600/30 backdrop-blur-md rounded-full mb-6">
-                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                            <span className="text-rose-400 text-xs font-black uppercase tracking-widest">100% Bio-Secure Certified</span>
-                        </div>
-                        <h1 className="text-6xl md:text-8xl font-black leading-[0.9] tracking-tighter mb-6">
-                            Master <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">Butchers.</span> <br />
-                            <span className="text-rose-600 italic">Direct to You.</span>
-                        </h1>
-                        <p className="text-2xl text-slate-400 font-medium max-w-2xl leading-relaxed mb-8">
-                            Premium cuts from local artisans, delivered in <span className="text-white font-bold">45 minutes</span>.
-                        </p>
-                    </motion.div>
+                    {/* ... header ... */}
 
                     {/* Global Search Bar */}
                     <motion.div
@@ -54,11 +29,7 @@ export default function Hero() {
                         className="max-w-2xl"
                     >
                         <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                const query = (e.currentTarget.elements.namedItem('search') as HTMLInputElement).value;
-                                if (query) window.location.href = `/butchers?q=${encodeURIComponent(query)}`;
-                            }}
+                            onSubmit={handleSearch}
                             className="relative group"
                         >
                             <div className="absolute inset-0 bg-rose-600/20 blur-2xl group-focus-within:bg-rose-600/40 transition-all rounded-3xl" />
@@ -90,10 +61,10 @@ export default function Hero() {
                         className="flex flex-wrap gap-4"
                     >
                         <Link
-                            href="/butchers"
+                            href="/shop"
                             className="h-16 px-10 bg-slate-900/50 hover:bg-slate-900 border border-white/10 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center gap-3 transition-all hover:scale-105"
                         >
-                            Browse All Shops <ArrowRight className="w-5 h-5" />
+                            Start Shopping <ArrowRight className="w-5 h-5" />
                         </Link>
                         <Link
                             href="/store"

@@ -2,19 +2,22 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, User, Search, X, LogIn, UserPlus, LogOut, Trash2, ArrowRight } from 'lucide-react';
+import { ShoppingBag, User, Search, X, LogIn, UserPlus, LogOut, Trash2, ArrowRight, Menu } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 
 export default function Navbar() {
     const {
         user, cart, cartCount, totalAmount, searchQuery,
-        setSearchQuery, removeFromCart, login, logout
+        setSearchQuery, removeFromCart, login, logout,
+        isCartOpen, setIsCartOpen
     } = useAppContext();
 
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
-    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
 
     const [authMode, setAuthMode] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
     const [formData, setFormData] = useState({
@@ -36,10 +39,10 @@ export default function Navbar() {
         setIsLoading(true);
         setError('');
 
-        const endpoint = authMode === 'LOGIN' ? '/api/auth/login/' : '/api/auth/register/';
+        const url = `${API_URL}${authMode === 'LOGIN' ? '/api/auth/login/' : '/api/auth/register/'}`;
 
         try {
-            const res = await fetch(`${API_URL}${endpoint}`, {
+            const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -49,7 +52,14 @@ export default function Navbar() {
 
             if (res.ok) {
                 if (authMode === 'LOGIN') {
-                    login(data.access, { username: formData.username });
+                    login(data.access, {
+                        username: data.username,
+                        email: data.email,
+                        first_name: data.first_name,
+                        last_name: data.last_name,
+                        id: data.user_id
+                    });
+                    toast.success(`Welcome back, ${data.username}!`);
                     setIsLoginOpen(false);
                 } else {
                     setAuthMode('LOGIN');
@@ -78,25 +88,33 @@ export default function Navbar() {
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-10">
                         {[
-                            { name: 'Marketplace', href: '/butchers' },
-                            { name: 'Our Store', href: '/store' },
+                            { name: 'Shop', href: '/shop' },
+                            { name: 'Gym Portal', href: '/gym' },
+                            { name: 'Pet Portal', href: '/pet' },
+                            { name: 'About Us', href: '/about' },
                             { name: 'Subscriptions', href: '/subscriptions' },
-                            { name: 'Gym Proteins', href: '/gym' },
-                            { name: 'Pet Meat', href: '/pet' }
-                        ].map((item) => (
+                        ].map((link) => (
                             <Link
-                                key={item.name}
-                                href={item.href}
-                                className="text-xs font-black uppercase tracking-widest text-slate-500 hover:text-rose-600 transition-colors"
+                                key={link.name}
+                                href={link.href}
+                                className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-rose-600 transition-colors"
                             >
-                                {item.name}
+                                {link.name}
                             </Link>
                         ))}
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {/* Global Search */}
-                        <div className={`flex items-center transition-all duration-500 ${isSearchOpen ? 'w-64 bg-slate-100 rounded-full px-4' : 'w-10'}`}>
+                        {/* Mobile Toggle */}
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="w-10 h-10 flex md:hidden items-center justify-center text-slate-900"
+                        >
+                            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                        </button>
+
+                        {/* Global Search (Desktop Only) */}
+                        <div className={`hidden md:flex items-center transition-all duration-500 ${isSearchOpen ? 'w-64 bg-slate-100 rounded-full px-4' : 'w-10'}`}>
                             <button
                                 onClick={() => setIsSearchOpen(!isSearchOpen)}
                                 className="w-10 h-10 flex items-center justify-center text-slate-900 hover:bg-slate-100/50 rounded-full transition-all"
@@ -133,7 +151,7 @@ export default function Navbar() {
                             )}
                         </button>
 
-                        <div className="h-6 w-px bg-slate-200 mx-2" />
+                        <div className="h-6 w-px bg-slate-200 mx-2 hidden md:block" />
 
                         {user ? (
                             <div className="flex items-center gap-4">
@@ -144,7 +162,6 @@ export default function Navbar() {
                                     <div className="w-2 h-2 rounded-full bg-rose-600 group-hover:animate-ping" />
                                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-900">Logistics Hub</span>
                                 </Link>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Hi, {user.username}</span>
                                 <button onClick={logout} className="p-2 text-slate-400 hover:text-rose-600 transition-colors">
                                     <LogOut className="w-5 h-5" />
                                 </button>
@@ -155,12 +172,72 @@ export default function Navbar() {
                                 className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest hover:bg-rose-600 transition-all shadow-lg active:scale-95"
                             >
                                 <User className="w-4 h-4" />
-                                <span>Sign In</span>
+                                <span className="hidden sm:inline">Sign In</span>
                             </button>
                         )}
                     </div>
                 </div>
             </nav>
+
+            {/* Mobile Menu Drawer */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[40] bg-slate-950/40 backdrop-blur-sm md:hidden"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="fixed top-0 left-0 h-full w-[80%] max-w-sm bg-white z-[45] shadow-2xl md:hidden flex flex-col pt-24 p-8"
+                        >
+                            <div className="space-y-8">
+                                {[
+                                    { name: 'Shop', href: '/shop' },
+                                    { name: 'Gym Portal', href: '/gym' },
+                                    { name: 'Pet Portal', href: '/pet' },
+                                    { name: 'About Us', href: '/about' },
+                                    { name: 'Subscriptions', href: '/subscriptions' },
+                                    { name: 'My Dashboard', href: '/dashboard/subscriptions' }
+                                ].map((link) => (
+                                    <Link
+                                        key={link.name}
+                                        href={link.href}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="block text-2xl font-black uppercase tracking-tighter italic hover:text-rose-600"
+                                    >
+                                        {link.name}
+                                    </Link>
+                                ))}
+                            </div>
+
+                            <div className="mt-auto border-t border-slate-100 pt-8">
+                                {user ? (
+                                    <button
+                                        onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+                                        className="flex items-center gap-3 text-slate-400 font-black uppercase tracking-widest text-[10px]"
+                                    >
+                                        <LogOut className="w-4 h-4" /> Sign Out from Hub
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => { setIsLoginOpen(true); setIsMobileMenuOpen(false); }}
+                                        className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3"
+                                    >
+                                        <LogIn className="w-4 h-4" /> Sign In / Register
+                                    </button>
+                                )}
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             {/* Login Modal */}
             <AnimatePresence>
@@ -311,13 +388,8 @@ export default function Navbar() {
                                     </div>
                                     <button
                                         onClick={() => {
-                                            if (user) {
-                                                window.location.href = '/checkout';
-                                            } else {
-                                                setIsCartOpen(false);
-                                                setIsLoginOpen(true);
-                                                setError('Please sign in to proceed with your order.');
-                                            }
+                                            setIsCartOpen(false);
+                                            window.location.href = '/checkout';
                                         }}
                                         className="w-full h-16 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 transition-all shadow-2xl"
                                     >

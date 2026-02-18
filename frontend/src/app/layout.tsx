@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "nprogress/nprogress.css";
 import Link from 'next/link';
 import { ShoppingBag, User, Search } from 'lucide-react';
 
@@ -20,7 +21,9 @@ export const metadata: Metadata = {
 };
 
 import Navbar from '@/components/Navbar';
+import ProgressBar from '@/components/ProgressBar';
 import { AppProvider } from '@/context/AppContext';
+import { Toaster } from 'react-hot-toast';
 
 export default function RootLayout({
   children,
@@ -31,6 +34,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}>
         <AppProvider>
+          <ProgressBar />
+          <Toaster position="bottom-center" />
           <Navbar />
           <div className="pt-20">
             {children}
@@ -56,6 +61,9 @@ export default function RootLayout({
                   <li className="hover:text-white cursor-pointer transition-colors">Tender Mutton</li>
                   <li className="hover:text-white cursor-pointer transition-colors">Ocean Fresh Fish</li>
                   <li className="hover:text-white cursor-pointer transition-colors">Jumbo Prawns</li>
+                  <li>
+                    <Link href="/about" className="hover:text-white cursor-pointer transition-colors">About Meathub</Link>
+                  </li>
                 </ul>
               </div>
               <div>
