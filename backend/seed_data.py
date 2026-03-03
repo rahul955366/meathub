@@ -4,10 +4,10 @@
 # ────────────────────────────────────────────────────────────────
 IMAGES = {
     # ═══ CHICKEN (Unique Pool) ═══
-    "chk_whole_1":        "/images/products/chicken/whole_premium_1.png",
-    "chk_curry_1":        "/images/products/chicken/curry_cut_premium_1.png",
+    "chk_whole_1":        "https://images.unsplash.com/photo-1598103442097-8b74394b99c6?w=800&q=80&fit=crop",
+    "chk_curry_1":        "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800&q=80&fit=crop",
     "chk_whole_2":        "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=800&q=80&fit=crop",
-    "chk_curry_2":        "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800&q=80&fit=crop",
+    "chk_curry_2":        "https://images.unsplash.com/photo-1606728035253-49df88630019?w=800&q=80&fit=crop",
     "chk_boneless_1":     "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=800&q=80&fit=crop",
     "chk_breast_1":       "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&q=80&fit=crop",
     "chk_thighs_1":       "https://images.unsplash.com/photo-1598103442097-8b74394b99c6?w=800&q=80&fit=crop",
@@ -20,8 +20,8 @@ IMAGES = {
     "chk_strips_1":       "https://images.unsplash.com/photo-1562967914-608f82629710?w=800&q=80&fit=crop",
     
     # ═══ MUTTON (Unique Pool) ═══
-    "mut_curry_1":        "/images/products/mutton/curry_cut_premium_1.png",
-    "mut_chops_1":         "/images/products/mutton/chops_premium_1.png",
+    "mut_curry_1":        "https://images.unsplash.com/photo-1602491673980-928929e46a75?w=800&q=80&fit=crop",
+    "mut_chops_1":        "https://images.unsplash.com/photo-1607532941433-304659e8198a?w=800&q=80&fit=crop",
     "mut_curry_2":        "https://images.unsplash.com/photo-1602491675983-c42bcf9a1a31?w=800&q=80&fit=crop",
     "mut_chops_2":        "https://images.unsplash.com/photo-1607532941433-304659e8198a?w=800&q=80&fit=crop",
     "mut_boneless_1":     "https://images.unsplash.com/photo-1616659000060-7e7c3d4b7e19?w=800&q=80&fit=crop",
@@ -35,8 +35,8 @@ IMAGES = {
     "mut_lamb_2":         "https://images.unsplash.com/photo-1621984584483-ad126ef67bbd?w=800&q=80&fit=crop",
     
     # ═══ FISH (Unique Pool) ═══
-    "fish_rohu_1":        "/images/products/fish/rohu_premium_1.png",
-    "fish_seer_1":        "/images/products/fish/seer_premium_1.png",
+    "fish_rohu_1":        "https://images.unsplash.com/photo-1521503332462-8511790bf7e5?w=800&q=80&fit=crop",
+    "fish_seer_1":        "https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=800&q=80&fit=crop",
     "fish_fresh_1":       "https://images.unsplash.com/photo-1521503332462-8511790bf7e5?w=800&q=80&fit=crop",
     "fish_sea_1":         "https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=800&q=80&fit=crop",
     "fish_white_1":       "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800&q=80&fit=crop",
@@ -143,12 +143,13 @@ SHOPS = [
 ]
 
 def seed_data():
-    from django.contrib.auth.models import User
-    from api.models import VillageSource, Butcher, MeatItem, UserProfile, PetFoodProduct, ButcherWasteCollection
     import django
     import os
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
     django.setup()
+
+    from django.contrib.auth.models import User
+    from api.models import VillageSource, Butcher, MeatItem, UserProfile, PetFoodProduct, ButcherWasteCollection, Order, OrderItem
 
     print("Purging old data deeply...")
     OrderItem.objects.all().delete()

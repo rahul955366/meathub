@@ -31,12 +31,10 @@ export default async function ButcherDetailPage({
     console.log(`[ROUTE DEBUG] Fetch result for ${id}: ${butcher.shop_name}`);
 
     // Filter items belonging to this butcher
-    let butcherItems = allItems.filter((item: MeatItem) => item.butcher === parseInt(id));
-
-    // FALLBACK IF EMPTY (For demo purposes)
-    if (butcherItems.length === 0) {
-        butcherItems = allItems;
-    }
+    const butcherItems = allItems.filter((item: MeatItem) => {
+        const itemButcherId = typeof item.butcher === 'object' ? (item.butcher as any).id : item.butcher;
+        return Number(itemButcherId) === Number(id);
+    });
 
     return (
         <ButcherMenu
