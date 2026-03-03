@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, CartItem, MeatItem } from '../types';
 import toast from 'react-hot-toast';
+import { registerAuthFailureCallback } from '@/lib/api';
 
 interface AppContextType {
     user: User | null;
@@ -32,6 +33,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // Initial load from localStorage
     useEffect(() => {
+        // Register Auth Interceptor
+        registerAuthFailureCallback(() => {
+            logout();
+            toast.error("Session Expired. Please login again.");
+        });
+
         const savedToken = localStorage.getItem('meathub_token');
         const savedUser = localStorage.getItem('meathub_user');
         const savedCart = localStorage.getItem('meathub_cart');
@@ -87,16 +94,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             if (existingIndex > -1) {
                 const newCart = [...prev];
                 newCart[existingIndex].quantity += 1;
-                toast.success(`Increased ${product.name} quantity`);
                 return newCart;
             }
 
             // Create new CartItem from MeatItem
             const newItem: CartItem = {
-                id: Date.now(), // Generate a temporary unique ID for the cart entry
+                id: Date.now(),
                 meat_item_id: product.id,
                 name: product.name,
-                price: parseFloat(product.price), // Ensure number
+                price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
                 quantity: 1,
                 image_url: product.image_url,
                 butcher_id: product.butcher,
@@ -104,9 +110,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 selectedCut: selectedCut
             };
 
-            toast.success(`Added ${product.name} to bag`);
             return [...prev, newItem];
         });
+
+        // Show toast outside updater
+        toast.success(`Success! ${product.name} added.`);
         setIsCartOpen(true); // Auto-open cart on add
     };
 

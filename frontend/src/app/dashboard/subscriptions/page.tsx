@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAppContext } from '@/context/AppContext';
-import { getSubscriptions, getGymSubscriptions, getPetSubscriptions, toggleSubscriptionStatus } from '@/lib/api';
+import { getSubscriptions, getGymSubscriptions, getPetSubscriptions, toggleSubscriptionStatus, skipSubscriptionDelivery } from '@/lib/api';
 import { Subscription, GymSubscription, PetSubscription } from '@/types';
 import { useRouter } from 'next/navigation';
 import PetProfileForm from '@/components/PetProfileForm';
@@ -72,6 +72,31 @@ export default function SubscriptionDashboard() {
         const success = await toggleSubscriptionStatus(token, type, id, !currentStatus);
         if (success) {
             fetchData(); // Refresh data
+        }
+    };
+
+    const handleSkip = async (type: 'general' | 'gym' | 'pet', id: number, customDate?: string) => {
+        if (!token) return;
+
+        let dateStr = customDate;
+        
+        if (!dateStr) {
+            // Calculate next Sunday if no date provided
+            const now = new Date();
+            const nextSunday = new Date();
+            nextSunday.setDate(now.getDate() + (7 - now.getDay()) % 7);
+            if (nextSunday.getDay() === now.getDay() && now.getHours() >= 12) {
+                nextSunday.setDate(nextSunday.getDate() + 7);
+            }
+            dateStr = nextSunday.toISOString().split('T')[0];
+        }
+
+        const success = await skipSubscriptionDelivery(token, type, id, dateStr);
+        if (success) {
+            toast.success(`Skipped delivery for ${dateStr}`);
+            fetchData();
+        } else {
+            toast.error("Failed to skip delivery.");
         }
     };
 
@@ -133,6 +158,7 @@ export default function SubscriptionDashboard() {
                                                             type="general"
                                                             subscription={sub}
                                                             onToggle={() => handleToggle('general', sub.id, sub.active)}
+                                                            onSkip={(date?: string) => handleSkip('general', sub.id, date)}
                                                         />
                                                     ))}
                                                     {[...gymSubscriptions].map((sub) => (
@@ -141,6 +167,7 @@ export default function SubscriptionDashboard() {
                                                             type="gym"
                                                             subscription={sub}
                                                             onToggle={() => handleToggle('gym', sub.id, sub.active)}
+                                                            onSkip={(date?: string) => handleSkip('gym', sub.id, date)}
                                                         />
                                                     ))}
                                                     {[...petSubscriptions].map((sub) => (
@@ -149,6 +176,7 @@ export default function SubscriptionDashboard() {
                                                             type="pet"
                                                             subscription={sub}
                                                             onToggle={() => handleToggle('pet', sub.id, sub.active)}
+                                                            onSkip={(date?: string) => handleSkip('pet', sub.id, date)}
                                                         />
                                                     ))}
                                                 </>
@@ -213,11 +241,13 @@ export default function SubscriptionDashboard() {
 function SubscriptionCard({
     subscription,
     type,
-    onToggle
+    onToggle,
+    onSkip
 }: {
     subscription: any;
     type: 'general' | 'gym' | 'pet';
-    onToggle: () => void
+    onToggle: () => void;
+    onSkip: () => void;
 }) {
     const isGeneral = type === 'general';
     const isGym = type === 'gym';
@@ -230,8 +260,9 @@ function SubscriptionCard({
 
     const getDetails = () => {
         if (isPet) return `${subscription.quantity_kg}kg • ${subscription.pet_type} Plan`;
-        if (isGym) return `${subscription.daily_quantity} • Fitness Protocol`;
-        return `${subscription.quantity_kg}kg • ${subscription.butcher_name}`;
+        if (isGym) return `${subscription.daily_quantity} • ${subscription.training_goal || 'Fitness'} Protocol`;
+        const sundayStr = subscription.delivery_option === 'SUNDAY_ONLY' ? ' [Sunday Only]' : '';
+        return `${subscription.quantity_kg}kg • ${subscription.butcher_name}${sundayStr}`;
     };
 
     const getCycleType = () => {
@@ -258,6 +289,8 @@ function SubscriptionCard({
         return 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=400&q=80';
     };
 
+    const [skipDate, setSkipDate] = useState('');
+
     return (
         <motion.div
             layout
@@ -269,6 +302,15 @@ function SubscriptionCard({
             <div className={`absolute top-0 left-12 px-4 py-2 rounded-b-2xl text-[8px] font-black uppercase tracking-widest text-white ${isPet ? 'bg-orange-500' : isGym ? 'bg-rose-600' : 'bg-slate-900'}`}>
                 {type}
             </div>
+
+            {/* B8: Training Goal Badge for GYM */}
+            {isGym && subscription.training_goal && (
+                <div className="absolute top-10 left-12">
+                    <span className="bg-slate-900 text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full border border-white/20">
+                        Goal: {subscription.training_goal}
+                    </span>
+                </div>
+            )}
 
             {/* Status Indicator */}
             <div className={`absolute top-0 right-12 px-6 py-3 rounded-b-3xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl ${subscription.active ? 'bg-emerald-500 text-white' : 'bg-slate-300 text-slate-600'}`}>
@@ -320,10 +362,38 @@ function SubscriptionCard({
             <div className="flex flex-row md:flex-col gap-4 w-full md:w-auto pt-6 md:pt-0 border-t md:border-t-0 border-slate-50">
                 <button
                     onClick={onToggle}
-                    className={`flex-1 md:w-48 h-16 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 ${subscription.active ? 'bg-slate-100 text-slate-900 hover:bg-rose-100 hover:text-rose-600' : 'bg-slate-900 text-white hover:bg-rose-600'}`}
+                    className={`flex-1 md:w-48 h-12 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 ${subscription.active ? 'bg-slate-100 text-slate-900 hover:bg-rose-100 hover:text-rose-600' : 'bg-slate-900 text-white hover:bg-rose-600'}`}
                 >
                     {subscription.active ? <><Pause className="w-4 h-4" /> Pause Cycle</> : <><Play className="w-4 h-4" /> Resume Cycle</>}
                 </button>
+                
+                {/* B6: Skip Date Picker */}
+                {subscription.active && (
+                    <div className="flex flex-col gap-2">
+                        <input
+                            type="date"
+                            value={skipDate}
+                            onChange={(e) => setSkipDate(e.target.value)}
+                            min={new Date().toISOString().split('T')[0]}
+                            className="w-full md:w-48 h-10 px-4 rounded-xl bg-slate-50 border border-slate-200 text-[10px] font-bold focus:outline-none focus:border-orange-500"
+                        />
+                        <button
+                            onClick={() => {
+                                if (!skipDate) {
+                                    onSkip(); // Fallback to default next Sunday if no date picked
+                                } else {
+                                    // Custom date skip (we need to pass it to onSkip)
+                                    // Actually, let's just make onSkip accept a date
+                                    (onSkip as any)(skipDate);
+                                }
+                            }}
+                            className="flex-1 md:w-48 h-12 rounded-2xl bg-orange-50 text-orange-600 border border-orange-100 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-orange-100 transition-all shadow-sm"
+                        >
+                            <CalendarIcon className="w-4 h-4" /> Skip Specific
+                        </button>
+                    </div>
+                )}
+                
                 <button className="h-16 w-16 md:w-48 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:bg-white hover:text-rose-600 hover:border-rose-100 transition-all shadow-sm">
                     <Settings className="w-5 h-5" />
                     <span className="hidden md:block ml-2 text-[10px] font-black uppercase tracking-widest">Modify</span>

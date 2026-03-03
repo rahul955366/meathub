@@ -84,6 +84,13 @@ def update_order_status(request, order_id):
         
     order.save()
     
+    # Send notifications
+    try:
+        from .notifications import notify_order_status
+        notify_order_status(order)
+    except Exception as e:
+        logger.error(f"Notification failed for order #{order.id}: {e}")
+
     logger.info(f"Order #{order.id} status: {old_status} -> {new_status} by {request.user.id}")
     
     return Response({

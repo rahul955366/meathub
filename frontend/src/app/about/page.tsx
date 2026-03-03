@@ -1,11 +1,10 @@
-"use client";
-
 import React from 'react';
-import { motion } from 'framer-motion';
 import { ShieldCheck, Truck, Clock, Award, Users, Heart, Zap, PlayCircle, Milestone } from 'lucide-react';
 import Link from 'next/link';
+import { getVillageSources } from '@/lib/api';
 
-export default function AboutPage() {
+export default async function AboutPage() {
+    const sources = await getVillageSources() || [];
     const stats = [
         { label: 'Butchers', value: '50+', icon: Users, color: 'text-rose-600' },
         { label: 'Avg Delivery', value: '45m', icon: Clock, color: 'text-emerald-600' },
@@ -45,9 +44,7 @@ export default function AboutPage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/80 to-transparent" />
 
                 <div className="container mx-auto px-4 relative z-10">
-                    <motion.div
-                        initial={{ opacity: 0, x: -50 }}
-                        animate={{ opacity: 1, x: 0 }}
+                    <div
                         className="max-w-3xl space-y-8"
                     >
                         <div className="inline-flex items-center gap-2 bg-rose-600 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em]">
@@ -68,7 +65,7 @@ export default function AboutPage() {
                                 Watch Film <PlayCircle className="w-5 h-5" />
                             </button>
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
             </section>
 
@@ -76,17 +73,14 @@ export default function AboutPage() {
             <div className="container mx-auto px-4 -mt-20 relative z-20">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                     {stats.map((s, i) => (
-                        <motion.div
+                        <div
                             key={i}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 + i * 0.1 }}
                             className="bg-white p-8 rounded-[2.5rem] shadow-2xl border border-slate-100 text-center space-y-2 group hover:-translate-y-2 transition-transform"
                         >
                             <s.icon className={`w-8 h-8 mx-auto mb-2 ${s.color}`} />
                             <p className="text-4xl font-black text-slate-900 tracking-tighter italic">{s.value}</p>
                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{s.label}</p>
-                        </motion.div>
+                        </div>
                     ))}
                 </div>
             </div>
@@ -157,6 +151,23 @@ export default function AboutPage() {
                                     {v.desc}
                                 </p>
                                 <div className="h-1 w-12 bg-slate-100 group-hover:w-full group-hover:bg-rose-100 transition-all duration-500 rounded-full" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Village Sourcing Section (Issue #9) */}
+            <section className="py-32 bg-white">
+                <div className="container mx-auto px-4">
+                    <h2 className="text-4xl font-black uppercase tracking-tighter italic text-slate-900 mb-16 text-center">
+                        Farm to <span className="text-rose-600">Fork</span>
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {sources.map((source: any) => (
+                            <div key={source.id} className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100">
+                                <h4 className="text-xl font-black uppercase tracking-tight text-slate-900 mb-2">{source.name}</h4>
+                                <p className="text-slate-500 text-sm font-medium">{source.location}</p>
                             </div>
                         ))}
                     </div>

@@ -7,7 +7,7 @@ import ProductDetailClient from './ProductDetailClient';
 export default async function ProductDetailPage({
     params
 }: {
-    params: { id: string, productId: string }
+    params: Promise<{ id: string, productId: string }>
 }) {
     const { id, productId } = await params;
 

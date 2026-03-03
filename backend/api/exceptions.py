@@ -15,15 +15,12 @@ def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
 
     if response is None:
-        if isinstance(exc, DjangoPermissionDenied):
-            return Response(
-                {'error': 'You do not have permission to perform this action.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        
-        # Log unhandled exceptions
-        logger.error(f"Unhandled exception in {context['view'].__class__.__name__}: {exc}", exc_info=True)
-        return None  # Let Django handle 500
+        # Always return JSON even for unhandled exceptions to prevent frontend parsing crashes
+        logger.error(f"Unhandled exception in {context['view'].__class__.__name__ if 'view' in context else 'Unknown'}: {exc}", exc_info=True)
+        return Response(
+            {'error': 'Internal Server Error', 'message': 'An unexpected condition was encountered.'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
     if response is not None:
         payload = {
@@ -57,8 +54,11 @@ def custom_exception_handler(exc, context):
         elif isinstance(exc, APIException):
             payload['error'] = getattr(exc, 'default_detail', 'API Error')
             if hasattr(exc, 'detail'):
-                 payload['message'] = exc.detail
+                payload['message'] = exc.detail
 
+        if response.status_code == 400:
+            logger.debug(f"400_BAD_REQUEST | Details: {response.data}")
+            
         response.data = payload
 
     return response

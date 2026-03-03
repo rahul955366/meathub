@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Minus, Star, Award, Flame } from 'lucide-react';
+import { Plus, Minus, Star, Award, Flame, MapPin } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 
 import { MeatItem, CartItem } from '@/types';
@@ -115,10 +115,15 @@ export default function MenuItemList({ item, onItemClick }: MenuItemProps) {
                     {item.description || "Fresh cut, premium quality meat sourced directly from certified farms. Vacuum packed for freshness and delivered in temperature controlled packs."}
                 </p>
 
-                <div className="mt-auto flex items-center gap-4 border-t border-dashed border-slate-100 pt-3">
-                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+                <div className="mt-auto flex flex-wrap items-center gap-4 border-t border-dashed border-slate-100 pt-3">
+                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100/50">
                         <Award className="w-3 h-3" /> Bio-Secure
                     </div>
+                    {item.village_source && (
+                        <div className="flex items-center gap-1.5 text-[10px] font-black uppercase text-rose-600 bg-rose-50 px-2 py-1 rounded-lg border border-rose-100/50">
+                            <MapPin className="w-3 h-3" /> {item.village_source}
+                        </div>
+                    )}
                     <div className="text-[10px] font-bold text-slate-400">
                         {Math.floor((item.id * 11) % 50) + 10} bought today
                     </div>

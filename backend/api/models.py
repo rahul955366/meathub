@@ -45,8 +45,20 @@ class UserProfile(models.Model):
         null=True,
         help_text="ID of the user's favorite butcher"
     )
+    
+    # Refer-a-Chef Loyalty Logic (Issue #14)
+    referral_code = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    referred_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals')
+    loyalty_points = models.IntegerField(default=0)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.referral_code:
+            import uuid
+            self.referral_code = f"CHEF-{str(uuid.uuid4())[:8].upper()}"
+        super().save(*args, **kwargs)
 
     class Meta:
         indexes = [
@@ -144,9 +156,21 @@ class Butcher(models.Model):
     
     is_available = models.BooleanField(default=True, help_text="Is the shop currently accepting orders?")
     is_official = models.BooleanField(default=False, help_text="Is this the MeatHub Official Flagship store?")
+    hygiene_score = models.IntegerField(
+        default=5, 
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text="1-5 Shells rating based on audit"
+    )
+    live_stream_url = models.URLField(
+        max_length=500, 
+        blank=True, 
+        null=True,
+        help_text="YouTube Live embed URL (Only for flagship store)"
+    )
     image_url = models.URLField(max_length=500, blank=True, null=True)
     opening_time = models.CharField(max_length=20, default="06:00 AM")
     closing_time = models.CharField(max_length=20, default="09:00 PM")
+    daily_order_quota = models.IntegerField(default=50, help_text="Maximum orders allowed per day")
     
     village_source = models.ForeignKey(
         VillageSource, 
@@ -206,6 +230,21 @@ class MeatItem(models.Model):
     category = models.CharField(max_length=100, db_index=True)
     image_url = models.URLField(blank=True, null=True)
     status = models.CharField(max_length=20, default='AVAILABLE', choices=STATUS_CHOICES)
+    
+    # Nutritional Macros (per 100g)
+    protein_g = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    fat_g = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    calories = models.IntegerField(default=0)
+    
+    # specialized flags
+    is_gym_approved = models.BooleanField(default=False)
+    is_pet_suitable = models.BooleanField(default=False)
+    product_type = models.CharField(
+        max_length=20, 
+        choices=[('GENERAL', 'General'), ('FITNESS', 'Fitness'), ('PET', 'Pet')], 
+        default='GENERAL'
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -260,6 +299,7 @@ class Subscription(models.Model):
     delivery_address = models.TextField()
     delivery_phone = models.CharField(max_length=15)
     subscription_price = models.DecimalField(max_digits=10, decimal_places=2)
+    skip_dates = models.JSONField(default=list, blank=True, help_text="List of dates (ISO format) to skip delivery")
     notify_if_not_home = models.BooleanField(default=True)
     notes = models.TextField(blank=True, null=True)
     
@@ -296,11 +336,18 @@ class GymSubscription(models.Model):
     meat_item = models.ForeignKey(MeatItem, on_delete=models.CASCADE)
     meat_item_name = models.CharField(max_length=100)
     daily_quantity = models.CharField(max_length=50, help_text="e.g. 2 servings, 500g, etc.")
+    
+    training_goal = models.CharField(
+        max_length=20, 
+        choices=[('CUT', 'Cut / Lean'), ('BULK', 'Bulk / Gain'), ('MAINTAIN', 'Maintenance')],
+        default='MAINTAIN'
+    )
     delivery_time = models.TimeField(default='06:00:00')
     active = models.BooleanField(default=True)
     next_delivery_date = models.DateField()
-    delivery_address = models.CharField(max_length=255)
+    delivery_address = models.TextField()
     delivery_phone = models.CharField(max_length=15)
+    skip_dates = models.JSONField(default=list, blank=True, help_text="List of dates to skip")
     notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -331,13 +378,45 @@ class PetSubscription(models.Model):
     schedule_type = models.CharField(max_length=10, choices=ScheduleType.choices)
     active = models.BooleanField(default=True)
     next_delivery_date = models.DateField()
-    delivery_address = models.CharField(max_length=255)
+    delivery_address = models.TextField()
+    skip_dates = models.JSONField(default=list, blank=True, help_text="List of dates to skip")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         verbose_name = 'Pet Subscription'
         verbose_name_plural = 'Pet Subscriptions'
+
+
+class ButcherWasteCollection(models.Model):
+    """
+    Tracks raw material (bones, trimmings) available for pet food processing.
+    """
+    butcher = models.ForeignKey(Butcher, on_delete=models.CASCADE, related_name='waste_listings')
+    waste_type = models.CharField(max_length=100, help_text="e.g. Chicken Frames, Mutton Bones")
+    quantity_kg = models.DecimalField(max_digits=10, decimal_places=2)
+    price_per_kg = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    is_available = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.waste_type} - {self.butcher.shop_name}"
+
+
+class PetFoodProduct(models.Model):
+    """
+    Specialized pet food products made from butcher waste/organs.
+    """
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    image_url = models.URLField(blank=True, null=True)
+    ingredients = models.TextField(help_text="Detailed listing of organs/cuts used")
+    is_vet_approved = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
 
 
 class Order(models.Model):
@@ -387,6 +466,21 @@ class Order(models.Model):
         choices=STATUS_CHOICES,
         db_index=True
     )
+    is_sunday_special = models.BooleanField(
+        default=False, 
+        help_text="Flag for weekly Sunday pre-orders"
+    )
+    sunday_slot = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        choices=[
+            ('EARLY_MORNING', '6 AM - 8 AM'),
+            ('MORNING', '8 AM - 10 AM'),
+            ('LATE_MORNING', '10 AM - 12 PM')
+        ],
+        help_text="Preferred time slot for Sunday deliveries"
+    )
     payment_method = models.CharField(max_length=20, default='COD', choices=PAYMENT_CHOICES)
     
     # Payment tracking fields
@@ -419,6 +513,11 @@ class Order(models.Model):
         auto_now=True,
         help_text="Last time status was updated"
     )
+    status_history = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="History of status changes (timestamp, status, changed_by)"
+    )
     cancelled_reason = models.TextField(
         blank=True,
         null=True,
@@ -450,8 +549,32 @@ class Order(models.Model):
         verbose_name_plural = 'Orders'
         
     def __str__(self):
-        return f"Order #{self.id} - {self.user.username} - {self.get_status_display()}"
+        return f"Order #{self.id} - {self.user.username if self.user else 'Guest'} - {self.get_status_display()}"
         
+    def save(self, *args, **kwargs):
+        # Handle status history on first creation or change
+        is_new = self.pk is None
+        if not is_new:
+            old_instance = Order.objects.get(pk=self.pk)
+            if old_instance.status != self.status:
+                self.status_history.append({
+                    'status': self.status,
+                    'timestamp': timezone.now().isoformat(),
+                    'message': f"Status updated to {self.get_status_display()}"
+                })
+        else:
+            # New order
+            self.status_history = [{
+                'status': 'PENDING',
+                'timestamp': timezone.now().isoformat(),
+                'message': "Order placed successfully"
+            }]
+            
+        if self.status == 'DELIVERED' and not self.delivered_at:
+            self.delivered_at = timezone.now()
+            
+        super().save(*args, **kwargs)
+
     def clean(self):
         """Validate order logic"""
         if self.total_amount <= 0:
@@ -508,3 +631,24 @@ class AIChatHistory(models.Model):
         
     def __str__(self):
         return f"{self.user.username} - {self.context} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+
+class Review(models.Model):
+    """
+    Customer reviews for butcher shops and orders.
+    """
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='review')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    butcher = models.ForeignKey(Butcher, on_delete=models.CASCADE, related_name='reviews')
+    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    comment = models.TextField(max_length=500, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['order', 'user']
+        verbose_name = 'Review'
+        verbose_name_plural = 'Reviews'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Review for {self.butcher.shop_name} - {self.rating} Stars"

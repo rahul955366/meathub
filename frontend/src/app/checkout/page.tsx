@@ -2,11 +2,13 @@
 
 import React, { useState } from 'react';
 import { useAppContext } from '@/context/AppContext';
-import { createOrder } from '@/lib/api';
+import { createOrder, createPaymentOrder, verifyPayment } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Phone, CreditCard, Wallet, Building, Check, ArrowRight, ShieldCheck, Clock, Truck, AlertCircle, User } from 'lucide-react';
+import { MapPin, Phone, CreditCard, Wallet, Building, Check, ArrowRight, ShieldCheck, Clock, Truck, AlertCircle, User, Store } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { getPlaceholderImage } from '@/utils/imageHelpers';
+import Script from 'next/script';
 
 interface FormData {
     name: string;
@@ -52,6 +54,8 @@ export default function CheckoutPage() {
         paymentMethod: 'COD'
     });
 
+    const [sundaySpecial, setSundaySpecial] = useState(false);
+    const [sundaySlot, setSundaySlot] = useState<'EARLY_MORNING' | 'MORNING' | 'LATE_MORNING'>('EARLY_MORNING');
     const [isProcessing, setIsProcessing] = useState(false);
 
     const validateStep1 = () => {
@@ -99,19 +103,74 @@ export default function CheckoutPage() {
         }
 
         if (subscriptionPlan) {
-            // Logic for subscription creation would go here
-            // For now, simulate success with a brief delay
+            // Subscriptions always go to a simulator for now as per user guide logic
             setTimeout(() => {
                 router.push('/order-success?type=subscription');
             }, 2000);
             return;
         }
 
+        let paymentId = '';
+
+        // --- Razorpay Integration ---
+        if (formData.paymentMethod !== 'COD') {
+            try {
+                // 1. Create Payment Order on Backend
+                const pOrder = await createPaymentOrder(token || '', totalAmount);
+                if (!pOrder || !pOrder.success) {
+                    throw new Error('Failed to initiate payment gateway.');
+                }
+
+                // 2. Open Razorpay Checkout
+                const options = {
+                    key: pOrder.razorpay_key,
+                    amount: totalAmount * 100,
+                    currency: 'INR',
+                    name: 'MeatHub',
+                    description: 'Premium Meat Purchase',
+                    order_id: pOrder.razorpay_order_id,
+                    handler: async (response: any) => {
+                        // 3. Verify Payment
+                        const verifyResult = await verifyPayment(token || '', {
+                            razorpay_order_id: pOrder.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        });
+
+                        if (verifyResult && verifyResult.success) {
+                            paymentId = verifyResult.payment_id;
+                            // Proceed to create final order
+                            await finalizeOrder(paymentId);
+                        } else {
+                            setError('Payment verification failed. Please contact support.');
+                            setIsProcessing(false);
+                        }
+                    },
+                    prefill: {
+                        name: formData.name,
+                        contact: formData.phone
+                    },
+                    theme: { color: "#e11d48" }
+                };
+
+                const rzp = new (window as any).Razorpay(options);
+                rzp.open();
+                return; // Early return, wait for handler
+            } catch (err: any) {
+                setError(err.message || 'Payment initiation failed.');
+                setIsProcessing(false);
+                return;
+            }
+        }
+
+        await finalizeOrder('');
+    };
+
+    const finalizeOrder = async (pId: string) => {
         // --- Multi-Butcher Order Splitting ---
-        // Group items by butcher_id
         const butcherGroups: Record<number, typeof cart> = {};
         cart.forEach(item => {
-            const bId = item.butcher_id || 1; // Fallback to 1 if missing
+            const bId = item.butcher_id;
             if (!butcherGroups[bId]) butcherGroups[bId] = [];
             butcherGroups[bId].push(item);
         });
@@ -128,18 +187,21 @@ export default function CheckoutPage() {
                 delivery_address: `${formData.address}, ${formData.landmark}, ${formData.city} - ${formData.pincode}`,
                 delivery_phone: formData.phone,
                 payment_method: formData.paymentMethod,
+                payment_id: pId || undefined,
+                sunday_special: sundaySpecial,
+                sunday_slot: sundaySpecial ? sundaySlot : undefined,
                 items: groupItems.map(item => ({
-                    meat_item_id: item.meat_item_id, // Use meat_item_id instead of entry id
+                    meat_item_id: item.meat_item_id,
                     quantity: item.quantity,
                     price: Number(item.price),
                 })),
             });
 
-            if (result.success) {
+            if (result && result.success) {
                 successCount++;
                 if (result.is_official) hasOfficial = true;
             } else {
-                lastError = result.error || 'Order placement failed.';
+                lastError = (result as any)?.error || 'Order placement failed.';
             }
         }
 
@@ -149,13 +211,8 @@ export default function CheckoutPage() {
                 ? `/order-success?split=${butcherIds.length}&official=${hasOfficial}`
                 : `/order-success?official=${hasOfficial}`;
             router.push(successUrl);
-        } else if (successCount > 0) {
-            // Partial success scenario
-            setError(`Successfully placed ${successCount} of ${butcherIds.length} orders. ${lastError}`);
-            // We should ideally remove successful items from cart, but for simplicity:
-            setIsProcessing(false);
         } else {
-            setError(lastError || 'Order placement failed. Please try again.');
+            setError(successCount > 0 ? `Partial success (${successCount}/${butcherIds.length}). ${lastError}` : lastError);
             setIsProcessing(false);
         }
     };
@@ -181,6 +238,7 @@ export default function CheckoutPage() {
 
     return (
         <main className="min-h-screen bg-slate-50 pt-32 pb-24">
+            <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
             <div className="container mx-auto px-4">
                 <div className="max-w-7xl mx-auto">
 
@@ -209,9 +267,23 @@ export default function CheckoutPage() {
                         {/* Error Banner */}
                         {error && (
                             <div className="lg:col-span-3">
-                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center gap-3">
-                                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                                    <p className="text-sm font-bold text-red-700">{error}</p>
+                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-red-50 border border-red-200 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-red-900/5">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                                            <AlertCircle className="w-6 h-6 text-red-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-base font-black text-red-900 uppercase tracking-tight italic">{error}</p>
+                                            <p className="text-xs text-red-700/60 font-medium mt-1">Stale data detected? Try resetting your bag to clear old product IDs.</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => { clearCart(); setError(null); router.push('/butchers'); }}
+                                        className="h-14 px-8 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-700 transition-all shadow-lg active:scale-95 whitespace-nowrap"
+                                    >
+                                        Reset Bag & Start Fresh
+                                    </button>
                                 </motion.div>
                             </div>
                         )}
@@ -261,7 +333,7 @@ export default function CheckoutPage() {
                                                         value={formData.phone}
                                                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                                         className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-rose-600 outline-none"
-                                                        placeholder="98765 43210"
+                                                        placeholder="9347277124"
                                                     />
                                                 </div>
                                                 <div className="md:col-span-2 space-y-2">
@@ -326,20 +398,33 @@ export default function CheckoutPage() {
                                                 <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">Sign in to earn rewards or continue as a guest</p>
                                             </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <Link href="/login?redirect=checkout" className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center hover:bg-rose-600 transition-all">
-                                                    Sign In / Register
-                                                </Link>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setGuestMode(true);
-                                                        setStep(3);
-                                                    }}
-                                                    className="w-full h-16 bg-white border-2 border-slate-100 text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:border-slate-300 transition-all"
-                                                >
-                                                    Continue as Guest
-                                                </button>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="p-6 rounded-[2rem] bg-slate-50 border border-slate-100 flex flex-col items-center justify-between gap-6 hover:border-rose-100 transition-all">
+                                                    <div className="space-y-2">
+                                                        <h4 className="text-sm font-black uppercase tracking-tight">Returning Customer</h4>
+                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Unlock premium rewards & track orders</p>
+                                                    </div>
+                                                    <Link href="/login?redirect=checkout" className="w-full h-14 bg-slate-900 text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center hover:bg-rose-600 transition-all shadow-lg">
+                                                        Sign In / Register
+                                                    </Link>
+                                                </div>
+
+                                                <div className="p-6 rounded-[2rem] bg-rose-50 border border-rose-100 flex flex-col items-center justify-between gap-6 hover:border-rose-200 transition-all">
+                                                    <div className="space-y-2">
+                                                        <h4 className="text-sm font-black uppercase tracking-tight text-rose-600">New Customer</h4>
+                                                        <p className="text-[10px] text-rose-400 font-bold uppercase tracking-widest">Fast checkout, no account needed</p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setGuestMode(true);
+                                                            setStep(3);
+                                                        }}
+                                                        className="w-full h-14 bg-rose-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-700 transition-all shadow-lg"
+                                                    >
+                                                        Continue as Guest
+                                                    </button>
+                                                </div>
                                             </div>
                                             <button
                                                 type="button"
@@ -394,6 +479,53 @@ export default function CheckoutPage() {
                                                         </div>
                                                     </button>
                                                 ))}
+                                            </div>
+
+                                            {/* Sunday Special Toggle (Issue #13) */}
+                                            <div className="mt-8 space-y-4">
+                                                <div className={`p-6 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${sundaySpecial ? 'bg-rose-50 border-rose-100' : 'bg-white border-slate-100'}`} onClick={() => setSundaySpecial(!sundaySpecial)}>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${sundaySpecial ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                                            <Clock className="w-6 h-6" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-sm font-black uppercase tracking-tight text-rose-900">Sunday Morning Special</h4>
+                                                            <p className="text-[10px] text-rose-400 font-bold uppercase tracking-widest mt-0.5">Priority Delivery (+₹49)</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`w-14 h-8 rounded-full p-1 transition-all ${sundaySpecial ? 'bg-rose-600' : 'bg-slate-200'}`}>
+                                                        <div className={`w-6 h-6 bg-white rounded-full shadow-sm transition-all ${sundaySpecial ? 'translate-x-6' : 'translate-x-0'}`} />
+                                                    </div>
+                                                </div>
+
+                                                <AnimatePresence>
+                                                    {sundaySpecial && (
+                                                        <motion.div
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: 'auto', opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            className="overflow-hidden space-y-3"
+                                                        >
+                                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4 mb-2">Select Your Sunday Slot</p>
+                                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                                {[
+                                                                    { id: 'EARLY_MORNING', label: '6am - 8am' },
+                                                                    { id: 'MORNING', label: '8am - 10am' },
+                                                                    { id: 'LATE_MORNING', label: '10am - 12pm' }
+                                                                ].map((slot) => (
+                                                                    <button
+                                                                        key={slot.id}
+                                                                        type="button"
+                                                                        onClick={() => setSundaySlot(slot.id as any)}
+                                                                        className={`h-14 rounded-xl border-2 font-black uppercase tracking-widest text-[9px] transition-all ${sundaySlot === slot.id ? 'border-rose-600 bg-rose-600 text-white shadow-lg' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                                                                    >
+                                                                        {slot.label}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
                                             </div>
 
                                             <div className="flex gap-4 mt-8">
@@ -496,7 +628,14 @@ export default function CheckoutPage() {
                                         cart.map((item) => (
                                             <div key={item.id} className="flex gap-4 pb-4 border-b border-slate-50">
                                                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-                                                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                                                    <img
+                                                        src={item.image_url && item.image_url.length > 10 ? item.image_url : getPlaceholderImage(item.category)}
+                                                        alt={item.name}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLImageElement).src = getPlaceholderImage(item.category);
+                                                        }}
+                                                    />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="text-xs font-black uppercase tracking-tight truncate">{item.name}</h4>
@@ -536,6 +675,6 @@ export default function CheckoutPage() {
                     </div>
                 </div>
             </div>
-        </main>
+        </main >
     );
 }

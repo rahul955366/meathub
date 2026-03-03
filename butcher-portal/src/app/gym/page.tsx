@@ -1,0 +1,243 @@
+"use client";
+
+import React, { useState } from 'react';
+import { getMeatItems } from '@/lib/api';
+import { Zap, Target, Award } from 'lucide-react';
+import ProductCard from '@/components/ProductCard';
+import SubscriptionForm from '@/components/SubscriptionForm';
+import NutritionAssistant from '@/components/NutritionAssistant';
+import ProteinCalculator from '@/components/ProteinCalculator';
+import { MeatItem } from '@/types';
+
+export default function GymPage() {
+    const [items, setItems] = useState<MeatItem[]>([]);
+    const [activeSubscriptionType, setActiveSubscriptionType] = useState<'GYM' | null>(null);
+    const [selectedPlan, setSelectedPlan] = useState('Maintenance');
+    const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
+
+    React.useEffect(() => {
+        getMeatItems().then(setItems);
+    }, []);
+
+    const handleStartProtocol = (planName: string, itemId?: number) => {
+        setSelectedPlan(planName);
+        if (itemId) setSelectedItemId(itemId);
+        setActiveSubscriptionType('GYM');
+    };
+
+    // Curated high-quality fitness/meat images
+    // Curated high-quality fitness/meat images - Expanded for variety
+    const GYM_IMAGES = [
+        'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=800&q=80', // Tandoori Chicken
+        'https://images.unsplash.com/photo-1626132646529-5006375bc9af?auto=format&fit=crop&w=800&q=80', // Chicken Tikka
+        'https://images.unsplash.com/photo-1623961988350-66b064faf29d?auto=format&fit=crop&w=800&q=80', // Seekh Kabab
+        'https://images.unsplash.com/photo-1588168333986-5078d3ae3976?auto=format&fit=crop&w=800&q=80', // Fresh Chicken Breast
+        'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80', // Raw Cuts
+        'https://images.unsplash.com/photo-1628102431502-990710609653?auto=format&fit=crop&w=800&q=80', // Mutton Chops
+        'https://images.unsplash.com/photo-1590244634358-00fc497818e6?auto=format&fit=crop&w=800&q=80', // Prawns (Protein)
+        'https://images.unsplash.com/photo-1551024601-56455b245a61?auto=format&fit=crop&w=800&q=80', // Grilled Chicken
+        'https://images.unsplash.com/photo-1626508035297-0cd27c425039?auto=format&fit=crop&w=800&q=80', // Tandoori Platter
+        'https://images.unsplash.com/photo-1521503332462-8511790bf7e5?auto=format&fit=crop&w=800&q=80'  // Fresh Fish (Omega)
+    ];
+
+    // Filter for protein-heavy items and ensure UNIQUE product names across multiple butchers
+    const nameMap = new Map<string, MeatItem>();
+    items.forEach(item => {
+        const categoryMatch = item.category?.toUpperCase() === 'GYM' || item.category?.toUpperCase() === 'CHICKEN';
+        const nameMatch = ['breast', 'lean', 'tandoori', 'tikka', 'kabab', 'thigh', 'salmon'].some(keyword =>
+            item.name.toLowerCase().includes(keyword)
+        );
+
+        if (categoryMatch || nameMatch) {
+            const normalizedName = item.name.toLowerCase().trim();
+            // Only keep the first encounter or the cheapest one (better UX)
+            if (!nameMap.has(normalizedName)) {
+                nameMap.set(normalizedName, item);
+            } else {
+                const existing = nameMap.get(normalizedName)!;
+                if (parseFloat(item.price) < parseFloat(existing.price)) {
+                    nameMap.set(normalizedName, item);
+                }
+            }
+        }
+    });
+
+    const proteinProducts = Array.from(nameMap.values())
+        .map((item, index) => {
+            // Enhanced deterministic visual assignment using modulo on ID and index
+            const imageIndex = (Number(item.id) + index) % GYM_IMAGES.length;
+            return {
+                ...item,
+                image_url: item.image_url && item.image_url.length > 10 ? item.image_url : GYM_IMAGES[imageIndex]
+            };
+        });
+
+    return (
+        <main className="min-h-screen bg-slate-950 text-white">
+            {/* Hero Section */}
+            <section className="relative h-[80vh] flex items-center overflow-hidden">
+                <div className="absolute inset-0">
+                    <img
+                        src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1920&sig=gym_hero"
+                        className="w-full h-full object-cover opacity-30"
+                        alt="Performance Fitness"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent" />
+                </div>
+
+                <div className="container mx-auto px-4 relative z-10">
+                    <div className="max-w-2xl space-y-8">
+                        <span className="text-rose-500 text-xs font-black uppercase tracking-[0.3em] flex items-center gap-2">
+                            <Zap className="w-4 h-4 fill-rose-500" /> PERFORMANCE FUEL
+                        </span>
+                        <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.9] tracking-tighter uppercase italic">
+                            Daily 250g <br /> <span className="text-rose-600 not-italic underline decoration-white underline-offset-8">Protein Target.</span>
+                        </h1>
+                        <p className="text-lg text-slate-400 font-medium italic leading-relaxed">
+                            Precision-cut lean meats for the dedicated athlete. Zero prep, maximum gains.
+                            Subscribed, sliced, and delivered fresh to your post-workout window.
+                        </p>
+                        <div className="flex gap-10">
+                            {[
+                                { val: "250g", label: "Daily Serving" },
+                                { val: "Lean", label: "Pure Protein" },
+                                { val: "Fresh", label: "Never Frozen" }
+                            ].map((stat, i) => (
+                                <div key={i} className="flex flex-col gap-1">
+                                    <span className="text-white font-black text-3xl tracking-tighter italic">{stat.val}</span>
+                                    <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">{stat.label}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <ProteinCalculator />
+
+            {/* Plans Section */}
+            <section className="py-24 bg-white text-slate-900 border-y border-slate-200">
+                <div className="container mx-auto px-4">
+                    <div className="text-center max-w-2xl mx-auto mb-20 space-y-4">
+                        <h2 className="text-5xl font-black tracking-tighter uppercase italic">The Protocol.</h2>
+                        <p className="text-slate-500 font-medium italic">Choose the plan that matches your training intensity.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {[
+                            { name: "Maintenance", qty: "250g", price: "4,499", icon: Target },
+                            { name: "Bulk Phase", qty: "500g", price: "8,299", icon: Award },
+                            { name: "Elite Athlete", qty: "1kg", price: "15,499", icon: Zap }
+                        ].map((plan, i) => (
+                            <div key={i} className={`p-10 rounded-[3rem] border-2 transition-all duration-500 group ${i === 1 ? 'border-rose-600 bg-slate-950 text-white shadow-2xl scale-105 z-10' : 'border-slate-100 bg-slate-50 hover:border-slate-300'}`}>
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-8 ${i === 1 ? 'bg-rose-600 text-white' : 'bg-slate-900 text-white'}`}>
+                                    <plan.icon className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-2xl font-black uppercase tracking-tighter italic mb-2">{plan.name}</h3>
+                                <div className="flex items-baseline gap-2 mb-8">
+                                    <span className="text-4xl font-black tracking-tighter italic">₹{plan.price}</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-50">/ Month</span>
+                                </div>
+                                <ul className="space-y-4 mb-10 text-sm font-bold uppercase tracking-tight opacity-70">
+                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-current" /> {plan.qty} Daily Serving</li>
+                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-current" /> 6 AM Door-Step Delivery</li>
+                                    <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-current" /> Pre-sliced for Cooking</li>
+                                </ul>
+                                <button
+                                    onClick={() => handleStartProtocol(plan.name)}
+                                    className={`w-full h-16 rounded-2xl font-black uppercase tracking-widest text-xs transition-all ${i === 1 ? 'bg-rose-600 text-white hover:bg-white hover:text-rose-600' : 'bg-slate-900 text-white hover:bg-rose-600'}`}>
+                                    Start Protocol
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Sub Modal */}
+                {activeSubscriptionType && (
+                    <SubscriptionForm
+                        type={activeSubscriptionType}
+                        planId={selectedPlan}
+                        initialItemId={selectedItemId || undefined}
+                        onClose={() => {
+                            setActiveSubscriptionType(null);
+                            setSelectedItemId(null);
+                        }}
+                    />
+                )}
+
+                <NutritionAssistant context="GYM" />
+
+                {/* ── Macro Tracking Display (Phase 18) — Per-item cards ── */}
+                {proteinProducts.some((i: MeatItem) => i.protein_g || i.fat_g || i.calories) && (
+                    <div className="container mx-auto px-4 mt-20 mb-10">
+                        <div className="bg-slate-900 rounded-3xl p-8 border border-white/5">
+                            <h2 className="text-2xl font-black text-white tracking-tighter uppercase italic mb-2">
+                                Macro Breakdown
+                            </h2>
+                            <p className="text-white/30 text-xs mb-8">Per 100g · Gym-approved cuts only</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {proteinProducts
+                                    .filter((i: MeatItem) => i.protein_g || i.fat_g || i.calories)
+                                    .slice(0, 9)
+                                    .map((item: MeatItem) => {
+                                        const protein = parseFloat(String(item.protein_g)) || 0;
+                                        const fat = parseFloat(String(item.fat_g)) || 0;
+                                        const cal = parseInt(String(item.calories)) || 0;
+                                        return (
+                                            <div key={item.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 hover:border-rose-500/30 transition-all">
+                                                <p className="text-white font-bold text-sm mb-3 truncate">{item.name}</p>
+                                                <div className="space-y-2">
+                                                    {[
+                                                        { label: 'Protein', value: protein, max: 35, color: '#3b82f6' },
+                                                        { label: 'Fat', value: fat, max: 20, color: '#f59e0b' },
+                                                        { label: 'Calories', value: cal, max: 300, color: '#e11d48' },
+                                                    ].map(({ label, value, max, color }) => (
+                                                        <div key={label}>
+                                                            <div className="flex justify-between items-center mb-1">
+                                                                <span className="text-white/40 text-[10px] font-bold uppercase tracking-wider">{label}</span>
+                                                                <span className="text-white/70 text-[10px] font-black">{value}{label === 'Calories' ? 'kcal' : 'g'}</span>
+                                                            </div>
+                                                            <div className="h-1 rounded-full bg-white/5 overflow-hidden">
+                                                                <div
+                                                                    className="h-full rounded-full transition-all duration-700"
+                                                                    style={{ width: `${Math.min(100, (value / max) * 100)}%`, background: color }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                            <p className="text-white/20 text-xs mt-6 italic">* Data sourced from backend-seeded gym-approved items.</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Products Grid */}
+                <div className="container mx-auto px-4 mt-10">
+                    <div className="flex items-center justify-between mb-16">
+                        <div>
+                            <h2 className="text-4xl font-black tracking-tighter text-slate-900 uppercase italic">Power Cuts</h2>
+                            <div className="h-1.5 w-16 bg-rose-600 mt-2" />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
+                        {proteinProducts.length > 0 ? (
+                            proteinProducts.map((item: MeatItem) => (
+                                <ProductCard key={item.id} item={item} buttonLabel="SUBSCRIBE" onAction={() => handleStartProtocol('Maintenance', item.id)} />
+                            ))
+                        ) : (
+                            <div className="col-span-full py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                                <p className="text-slate-400 font-black uppercase tracking-widest text-sm italic">Muscle fuel arriving soon from our village sources...</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </section>
+        </main>
+    );
+}

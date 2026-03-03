@@ -81,6 +81,14 @@ Navigate to: **http://localhost:3000**
    - Explain transparency advantage
    - Show premium product catalog
 
+### **Act 5: The Butcher SaaS (B2B Power)**
+10. **Log in as Butcher** (e.g., `butcher1`):
+    - **Today's Menu**: Show the rapid availability toggle (Available vs Sold Out).
+    - **Orders Dashboard**: Highlight the real-time "Pending Orders" alert banner.
+    - **Inventory Management**: Demonstrate updating provenance/village source for transparency.
+    - **Sunday Preview**: Show the aggregated demand view (Total quantity needed for pre-orders).
+    - Explain: "We provide butchers with the tools to compete with multi-billion dollar brands."
+
 ---
 
 ## 🎯 Key Talking Points

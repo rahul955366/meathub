@@ -4,12 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, ShieldCheck, MapPin, ShoppingBag, ChevronRight, Video, Target, Heart } from 'lucide-react';
 import Link from 'next/link';
-import { getOfficialItems } from '@/lib/api';
+import { getOfficialItems, fetchWasteCollections } from '@/lib/api';
 import { MeatItem } from '@/types';
+import AIChat from '@/components/AIChat';
 
 export default function StorePage() {
     const [activeTab, setActiveTab] = useState('LIVE'); // LIVE, CATALOG, STANDARDS
     const [items, setItems] = useState<any[]>([]);
+    const [wasteCuts, setWasteCuts] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [filter, setFilter] = useState('ALL');
 
@@ -17,8 +19,12 @@ export default function StorePage() {
         async function loadData() {
             setLoading(true);
             try {
-                const data = await getOfficialItems();
-                setItems(data);
+                const [data, wasteData] = await Promise.all([
+                    getOfficialItems(),
+                    fetchWasteCollections()
+                ]);
+                setItems(data || []);
+                setWasteCuts(wasteData || []);
             } catch (err) {
                 console.error("Failed to fetch store items", err);
             } finally {
@@ -127,24 +133,32 @@ export default function StorePage() {
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                    {/* Primary Camera: Live Yard/Cutting */}
                                     <div className="group relative aspect-video rounded-[3.5rem] overflow-hidden border border-white/10 bg-slate-900 shadow-2xl">
-                                        <div className="absolute inset-0 bg-slate-950/20 z-10" />
-                                        <img
-                                            src="https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=1200&sig=cam_1"
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                                            alt="Live Bird Yard"
-                                        />
+                                        {items.find(i => i.live_stream_url)?.live_stream_url ? (
+                                            <iframe
+                                                src={items.find(i => i.live_stream_url).live_stream_url}
+                                                className="w-full h-full"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            />
+                                        ) : (
+                                            <>
+                                                <div className="absolute inset-0 bg-slate-950/20 z-10" />
+                                                <img
+                                                    src="https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&w=1200&sig=cam_1"
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                                                    alt="Live Bird Yard"
+                                                />
+                                            </>
+                                        )}
                                         <div className="absolute top-10 left-10 z-20 flex items-center gap-3">
                                             <span className="h-3 w-3 rounded-full bg-rose-600 animate-pulse" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.3em] shadow-2xl bg-slate-950/80 px-4 py-2 rounded-full backdrop-blur">Yard Cam 01</span>
-                                        </div>
-                                        <div className="absolute bottom-10 right-10 z-20">
-                                            <div className="w-16 h-16 rounded-full bg-rose-600 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-2xl shadow-rose-900/40">
-                                                <Play className="w-6 h-6 fill-white ml-1" />
-                                            </div>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.3em] shadow-2xl bg-slate-950/80 px-4 py-2 rounded-full backdrop-blur">LIVE HD STREAM</span>
                                         </div>
                                     </div>
 
+                                    {/* Secondary View: Heritage/Standards */}
                                     <div className="group relative aspect-video rounded-[3.5rem] overflow-hidden border border-white/10 bg-slate-900 shadow-2xl">
                                         <div className="absolute inset-0 bg-slate-950/20 z-10" />
                                         <img
@@ -154,7 +168,7 @@ export default function StorePage() {
                                         />
                                         <div className="absolute top-10 left-10 z-20 flex items-center gap-3">
                                             <span className="h-3 w-3 rounded-full bg-rose-600 animate-ping" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.3em] shadow-2xl bg-slate-950/80 px-4 py-2 rounded-full backdrop-blur">Cutting Cam 04</span>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.3em] shadow-2xl bg-slate-950/80 px-4 py-2 rounded-full backdrop-blur">Butchery Hub 04</span>
                                         </div>
                                         <div className="absolute bottom-10 right-10 z-20">
                                             <div className="w-16 h-16 rounded-full bg-rose-600 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-2xl shadow-rose-900/40">
@@ -259,6 +273,31 @@ export default function StorePage() {
                 </div>
             </section>
 
+            {/* Budget Cuts Section (Issue #11) */}
+            {wasteCuts.length > 0 && (
+                <section className="py-24 bg-white text-slate-900">
+                    <div className="container mx-auto px-4">
+                        <div className="mb-12 text-center">
+                            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter italic mb-4">
+                                Budget <span className="text-rose-600">Cuts</span>
+                            </h2>
+                            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">High Protein. Low Waste. Certified Safe.</p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            {wasteCuts.map((cut: any) => (
+                                <div key={cut.id} className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 flex flex-col items-center text-center">
+                                    <h4 className="text-xl font-black uppercase italic text-slate-900 mb-2">{cut.waste_type?.replace(/_/g, ' ')}</h4>
+                                    <p className="text-rose-600 font-black text-2xl mb-4">₹{cut.price_per_kg}/kg</p>
+                                    <button className="mt-auto px-6 py-3 bg-slate-900 text-white rounded-xl font-black uppercase tracking-widest text-[10px]">
+                                        Add to Cart
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {/* CTA SECTION */}
             <section className="py-40 relative">
                 <div className="container mx-auto px-4">
@@ -275,6 +314,7 @@ export default function StorePage() {
                     </div>
                 </div>
             </section>
+            <AIChat context="GENERAL" title="Flagship Concierge" />
         </main>
     );
 }

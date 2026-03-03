@@ -78,7 +78,7 @@ export default function ProteinCalculator() {
                     {/* Output Cards */}
                     <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <motion.div
-                            key={protein}
+                            key={`DEBUG-PROT-${protein}`}
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             className="p-10 bg-white rounded-[3.5rem] flex flex-col items-center text-center space-y-4 shadow-2xl shadow-rose-900/20"
@@ -94,7 +94,7 @@ export default function ProteinCalculator() {
                         </motion.div>
 
                         <motion.div
-                            key={meatReq}
+                            key={`DEBUG-MEAT-${meatReq}`}
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             transition={{ delay: 0.1 }}

@@ -9,6 +9,7 @@ import MarqueeBanner from '@/components/MarqueeBanner';
 import { ArrowRight, Clock, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { MeatItem, Butcher } from '@/types';
+import AIChat from '@/components/AIChat';
 
 interface HomeContentProps {
     initialItems: MeatItem[];
@@ -125,6 +126,7 @@ export default function HomeContent({ initialItems = [], initialButchers = [] }:
                     </div>
                 </div>
             </section>
+            <AIChat context="GENERAL" title="MeatHub Assistant" />
         </main>
     );
 }

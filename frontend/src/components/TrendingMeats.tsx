@@ -23,8 +23,8 @@ export default function TrendingMeats({ items }: { items: MeatItem[] }) {
         }
     });
 
-    // 2. Fill the rest to reach 6 items
-    const fillers = cleanItems.filter(i => !usedIds.has(i.id)).slice(0, 6 - diverseTrending.length);
+    // 2. Fill the rest to reach 12 items
+    const fillers = cleanItems.filter(i => !usedIds.has(i.id)).slice(0, 12 - diverseTrending.length);
     const trending = [...diverseTrending, ...fillers];
 
     return (

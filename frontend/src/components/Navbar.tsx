@@ -2,78 +2,24 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, User, Search, X, LogIn, UserPlus, LogOut, Trash2, ArrowRight, Menu } from 'lucide-react';
+import { ShoppingBag, User, Search, X, LogIn, UserPlus, LogOut, Trash2, ArrowRight, Menu, Minus, Plus, Clock } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import AuthForm from './AuthForm';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
     const {
         user, cart, cartCount, totalAmount, searchQuery,
-        setSearchQuery, removeFromCart, login, logout,
+        setSearchQuery, removeFromCart, addToCart, login, logout,
         isCartOpen, setIsCartOpen
     } = useAppContext();
 
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-
-    const [authMode, setAuthMode] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
-    const [formData, setFormData] = useState({
-        username: '',
-        password: '',
-        email: '',
-        first_name: '',
-        last_name: ''
-    });
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const API_URL = typeof window === 'undefined'
-        ? 'http://backend:8000'
-        : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
-
-    const handleAuth = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError('');
-
-        const url = `${API_URL}${authMode === 'LOGIN' ? '/api/auth/login/' : '/api/auth/register/'}`;
-
-        try {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                if (authMode === 'LOGIN') {
-                    login(data.access, {
-                        username: data.username,
-                        email: data.email,
-                        first_name: data.first_name,
-                        last_name: data.last_name,
-                        id: data.user_id
-                    });
-                    toast.success(`Welcome back, ${data.username}!`);
-                    setIsLoginOpen(false);
-                } else {
-                    setAuthMode('LOGIN');
-                    setError('Account created! Please sign in.');
-                }
-            } else {
-                setError(data.detail || 'Authentication failed. Please check your credentials.');
-            }
-        } catch (err) {
-            setError('Connection failed. Is the backend running?');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const router = useRouter();
 
     return (
         <>
@@ -87,17 +33,26 @@ export default function Navbar() {
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-10">
-                        {[
-                            { name: 'Shop', href: '/shop' },
-                            { name: 'Gym Portal', href: '/gym' },
-                            { name: 'Pet Portal', href: '/pet' },
-                            { name: 'About Us', href: '/about' },
-                            { name: 'Subscriptions', href: '/subscriptions' },
-                        ].map((link) => (
+                        {(user?.is_butcher
+                            ? [
+                                { name: 'Monitor Orders', href: '/butcher/orders' },
+                                { name: 'Inventory Control', href: '/butcher/inventory' },
+                                { name: 'Morning Menu', href: '/butcher/menu' },
+                                { name: 'Sunday Preview', href: '/butcher/sunday-preview' },
+                            ]
+                            : [
+                                { name: 'Browse Meat', href: '/shop' },
+                                { name: 'Official Store', href: '/store' },
+                                { name: 'Gym Fuel', href: '/gym' },
+                                { name: 'Pet Care', href: '/pet' },
+                                { name: 'Subscriptions', href: '/subscriptions' },
+                                { name: 'About', href: '/about' },
+                            ]
+                        ).map((link) => (
                             <Link
                                 key={link.name}
                                 href={link.href}
-                                className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-rose-600 transition-colors"
+                                className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-rose-600 transition-all hover:scale-105"
                             >
                                 {link.name}
                             </Link>
@@ -156,11 +111,13 @@ export default function Navbar() {
                         {user ? (
                             <div className="flex items-center gap-4">
                                 <Link
-                                    href="/dashboard/subscriptions"
+                                    href={user.is_staff || user.is_butcher ? "/butcher/dashboard" : "/dashboard"}
                                     className="hidden lg:flex items-center gap-2 bg-slate-50 border border-slate-100 px-4 py-2 rounded-xl group hover:border-rose-600 transition-colors"
                                 >
                                     <div className="w-2 h-2 rounded-full bg-rose-600 group-hover:animate-ping" />
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-900">Logistics Hub</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-900">
+                                        {user.is_staff || user.is_butcher ? "Butcher Hub" : "Logistics Hub"}
+                                    </span>
                                 </Link>
                                 <button onClick={logout} className="p-2 text-slate-400 hover:text-rose-600 transition-colors">
                                     <LogOut className="w-5 h-5" />
@@ -198,14 +155,21 @@ export default function Navbar() {
                             className="fixed top-0 left-0 h-full w-[80%] max-w-sm bg-white z-[45] shadow-2xl md:hidden flex flex-col pt-24 p-8"
                         >
                             <div className="space-y-8">
-                                {[
-                                    { name: 'Shop', href: '/shop' },
-                                    { name: 'Gym Portal', href: '/gym' },
-                                    { name: 'Pet Portal', href: '/pet' },
-                                    { name: 'About Us', href: '/about' },
-                                    { name: 'Subscriptions', href: '/subscriptions' },
-                                    { name: 'My Dashboard', href: '/dashboard/subscriptions' }
-                                ].map((link) => (
+                                {(user?.is_butcher
+                                    ? [
+                                        { name: 'Today\'s Orders', href: '/butcher/orders' },
+                                        { name: 'Manage Stock', href: '/butcher/inventory' },
+                                        { name: 'Back to Store', href: '/' },
+                                    ]
+                                    : [
+                                        { name: 'Browse Meat', href: '/shop' },
+                                        { name: 'Official Store', href: '/store' },
+                                        { name: 'Gym Fuel', href: '/gym' },
+                                        { name: 'Pet Care', href: '/pet' },
+                                        { name: 'Subscriptions', href: '/subscriptions' },
+                                        { name: 'Track My Orders', href: '/orders' },
+                                    ]
+                                ).map((link) => (
                                     <Link
                                         key={link.name}
                                         href={link.href}
@@ -255,75 +219,18 @@ export default function Navbar() {
                             exit={{ scale: 0.9, opacity: 0 }}
                             className="relative bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden"
                         >
-                            <form className="p-10" onSubmit={handleAuth}>
-                                <div className="flex justify-between items-center mb-10">
-                                    <span className="text-xl font-black tracking-tighter uppercase italic">
-                                        MEAT<span className="text-rose-600 not-italic">HUB</span>
-                                    </span>
-                                    <button type="button" onClick={() => setIsLoginOpen(false)} className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center hover:bg-rose-100 transition-all">
+                            <div className="p-10">
+                                <AuthForm onSuccess={() => setIsLoginOpen(false)} />
+                                <div className="mt-6 text-center">
+                                    <button
+                                        onClick={() => setIsLoginOpen(false)}
+                                        className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center hover:bg-rose-100 transition-all mx-auto"
+                                    >
                                         <X className="w-5 h-5" />
                                     </button>
                                 </div>
+                            </div>
 
-                                <h2 className="text-3xl font-black tracking-tighter uppercase italic mb-2">
-                                    {authMode === 'LOGIN' ? 'Welcome Back' : 'Join the Club'}
-                                </h2>
-                                <p className="text-slate-500 font-medium italic text-sm mb-8">
-                                    {authMode === 'LOGIN' ? 'Enter your credentials to access premium cuts.' : 'Create an account for artisanal meat delivery.'}
-                                </p>
-
-                                {error && (
-                                    <div className="bg-rose-50 border border-rose-100 text-rose-600 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest mb-6">
-                                        {error}
-                                    </div>
-                                )}
-
-                                <div className="space-y-4">
-                                    {authMode === 'REGISTER' && (
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">First Name</label>
-                                                <input required type="text" className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-rose-600 outline-none" placeholder="Chef" value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Last Name</label>
-                                                <input required type="text" className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-rose-600 outline-none" placeholder="Meat" value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} />
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Username</label>
-                                        <input required type="text" className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-rose-600 outline-none" placeholder="the_pitmaster" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} />
-                                    </div>
-                                    {authMode === 'REGISTER' && (
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Email Address</label>
-                                            <input required type="email" className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-rose-600 outline-none" placeholder="chef@meathub.com" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-                                        </div>
-                                    )}
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Password</label>
-                                        <input required type="password" className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-rose-600 outline-none" placeholder="••••••••" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
-                                    </div>
-                                </div>
-
-                                <button
-                                    disabled={isLoading}
-                                    className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs mt-10 hover:bg-rose-600 transition-all shadow-xl flex items-center justify-center gap-2"
-                                >
-                                    {isLoading ? 'Processing...' : (authMode === 'LOGIN' ? 'Sign In to Hub' : 'Create Account')}
-                                </button>
-
-                                <div className="mt-8 text-center">
-                                    <button
-                                        type="button"
-                                        onClick={() => setAuthMode(authMode === 'LOGIN' ? 'REGISTER' : 'LOGIN')}
-                                        className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-rose-600 transition-colors"
-                                    >
-                                        {authMode === 'LOGIN' ? "Don't have an account? Sign Up" : "Already a member? Sign In"}
-                                    </button>
-                                </div>
-                            </form>
                         </motion.div>
                     </motion.div>
                 )}
@@ -361,18 +268,42 @@ export default function Navbar() {
                                     </div>
                                 ) : (
                                     cart.map(item => (
-                                        <div key={item.id} className="flex gap-4 group">
-                                            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 flex-shrink-0">
+                                        <div key={`${item.id}-${item.selectedCut}`} className="flex gap-4 group bg-slate-50 p-4 rounded-3xl border border-transparent hover:border-rose-100 transition-all">
+                                            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-white flex-shrink-0 shadow-sm">
                                                 <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
                                             </div>
                                             <div className="flex-1 space-y-1">
-                                                <h4 className="font-black text-sm uppercase tracking-tight text-slate-900">{item.name}</h4>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{item.category}</p>
-                                                <div className="flex items-center justify-between pt-1">
-                                                    <p className="text-rose-600 font-black italic">₹{item.price} x {item.quantity}</p>
-                                                    <button onClick={() => removeFromCart(item.id)} className="text-slate-300 hover:text-rose-600 transition-colors">
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <h4 className="font-black text-sm uppercase tracking-tight text-slate-900">{item.name}</h4>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-rose-600">{item.selectedCut}</p>
+                                                    </div>
+                                                    <button onClick={() => removeFromCart(item.meat_item_id, item.selectedCut)} className="text-slate-300 hover:text-rose-600 transition-colors">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
+                                                </div>
+                                                <div className="flex items-center justify-between pt-2">
+                                                    <p className="text-slate-900 font-black italic text-sm">₹{item.price}</p>
+                                                    <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-xl shadow-sm border border-slate-100">
+                                                        <button
+                                                            onClick={() => {
+                                                                if (item.quantity > 1) {
+                                                                    // Decrease quantity logic (could be added to context, but for now we remove one and add back is complex, better to add updateQuantity to context)
+                                                                    toast.error("Use trash to remove item completely");
+                                                                }
+                                                            }}
+                                                            className="text-slate-400 hover:text-rose-600"
+                                                        >
+                                                            <Minus className="w-3 h-3" />
+                                                        </button>
+                                                        <span className="text-xs font-black italic">{item.quantity}</span>
+                                                        <button
+                                                            onClick={() => addToCart({ id: item.meat_item_id, name: item.name, price: item.price, image_url: item.image_url } as any, item.selectedCut)}
+                                                            className="text-slate-400 hover:text-rose-600"
+                                                        >
+                                                            <Plus className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -385,6 +316,13 @@ export default function Navbar() {
                                     <div className="flex items-center justify-between">
                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Order Summary</span>
                                         <span className="text-2xl font-black italic tracking-tighter text-slate-900">₹{totalAmount}</span>
+                                    </div>
+                                    <div className="bg-emerald-50 p-4 rounded-2xl flex items-center gap-3 border border-emerald-100">
+                                        <Clock className="w-5 h-5 text-emerald-600" />
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Estimated Delivery</p>
+                                            <p className="text-xs font-bold text-emerald-800">45-60 Minutes from MeatHub Hub</p>
+                                        </div>
                                     </div>
                                     <button
                                         onClick={() => {

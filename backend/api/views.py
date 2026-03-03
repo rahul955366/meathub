@@ -1,28 +1,31 @@
 from django.contrib.auth.models import User
 from django.db import transaction, IntegrityError, OperationalError
 from django.conf import settings
+from django.utils import timezone
 from rest_framework import viewsets, status, generics
+from rest_framework.decorators import action
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.request import Request
 from rest_framework_simplejwt.views import TokenObtainPairView
+from typing import List, Dict, Any, Optional
 
 import logging
 from decimal import Decimal, InvalidOperation
 from functools import wraps
-from typing import List, Dict, Any, Optional
-import google.generativeai as genai
 from math import radians, cos, sin, asin, sqrt
 
 from .models import (
     Butcher, MeatItem, Subscription, GymSubscription, PetSubscription,
-    UserProfile, Order, OrderItem, AIChatHistory, VillageSource
+    UserProfile, Order, OrderItem, AIChatHistory, VillageSource, Review,
+    ButcherWasteCollection, PetFoodProduct
 )
 from .serializers import (
     RegisterSerializer, ButcherSerializer, MeatItemSerializer,
     SubscriptionSerializer, GymSubscriptionSerializer, PetSubscriptionSerializer,
-    UserProfileSerializer, OrderSerializer, MyTokenObtainPairSerializer
+    UserProfileSerializer, OrderSerializer, MyTokenObtainPairSerializer, ReviewSerializer,
+    ButcherWasteCollectionSerializer, PetFoodProductSerializer
 )
 from .throttles import LoginRateThrottle, RegisterRateThrottle, OrderRateThrottle
 
@@ -35,11 +38,6 @@ class MyTokenObtainPairView(TokenObtainPairView):
     throttle_classes = [LoginRateThrottle]
 
 logger = logging.getLogger(__name__)
-
-# Configure Gemini AI
-if settings.GEMINI_API_KEY:
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-
 
 def handle_api_errors(func):
     """
@@ -71,6 +69,32 @@ def handle_api_errors(func):
     return wrapper
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@handle_api_errors
+def me(request):
+    """
+    Returns the current authenticated user's details and role information.
+    Used for frontend role-based routing.
+    """
+    is_butcher = hasattr(request.user, 'butcher_profile')
+    return Response({
+        'id': request.user.id,
+        'username': request.user.username,
+        'is_butcher': is_butcher,
+        'butcher_id': request.user.butcher_profile.id if is_butcher else None,
+        'email': request.user.email,
+        'is_staff': request.user.is_staff
+    })
+
+# Configure Gemini AI (Disabled as per user preference)
+# if settings.GEMINI_API_KEY:
+#     import google.generativeai as genai
+#     genai.configure(api_key=settings.GEMINI_API_KEY)
+
+
+
+
 class RegisterView(generics.CreateAPIView):
     """
     Endpoint for new user registration.
@@ -82,27 +106,60 @@ class RegisterView(generics.CreateAPIView):
     throttle_classes = [RegisterRateThrottle]
 
 
+from django.db.models import Avg, Count
+
 class ButcherViewSet(viewsets.ModelViewSet):
     """
     ViewSet for viewing Butcher shops.
     Read-only for unauthenticated users, public access allowed.
-    Optimized with select_related and prefetch_related.
+    Optimized with live ratings and order counts.
     """
-    queryset = Butcher.objects.select_related('user', 'village_source') \
-                              .prefetch_related('meat_items') \
-                              .filter(status='APPROVED')
     serializer_class = ButcherSerializer
     permission_classes = [AllowAny]
+    queryset = Butcher.objects.none()
+
+    def get_queryset(self):
+        return Butcher.objects.select_related('user', 'village_source') \
+                               .annotate(
+                                   rating=Avg('reviews__rating'),
+                                   total_orders=Count('orders', distinct=True)
+                               ) \
+                               .filter(status='APPROVED')
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def reset_stock(self, request, pk=None):
+        """
+        Special Day 3 Feature: Resets all meat items to AVAILABLE for the morning.
+        """
+        butcher = self.get_object()
+        # Verify ownership: Butcher can only reset their own shop
+        if request.user != butcher.user and not request.user.is_staff:
+            return Response({"error": "Unauthorized. You do not own this shop."}, status=status.HTTP_403_FORBIDDEN)
+        
+        from .models import MeatItem
+        MeatItem.objects.filter(butcher=butcher).update(status='AVAILABLE')
+        
+        logger.info(f"MORNING_RESET | Butcher: {butcher.shop_name} | By: {request.user.email}")
+        return Response({"message": f"Successfully reset stock for {butcher.shop_name} for the morning."})
 
 
 class MeatItemViewSet(viewsets.ModelViewSet):
     """
     ViewSet for meat inventory items.
-    Filters for available items only.
+    Supports ?mine=true for butcher-specific inventory.
     """
-    queryset = MeatItem.objects.select_related('butcher').filter(status='AVAILABLE')
     serializer_class = MeatItemSerializer
     permission_classes = [AllowAny]
+    queryset = MeatItem.objects.none()
+
+    def get_queryset(self):
+        if self.request.query_params.get('mine') == 'true':
+            if self.request.user.is_authenticated and hasattr(self.request.user, 'butcher_profile'):
+                return MeatItem.objects.filter(
+                    butcher=self.request.user.butcher_profile,
+                    status='AVAILABLE'
+                ).select_related('butcher')
+        return MeatItem.objects.select_related('butcher').filter(status='AVAILABLE')
 
 
 class SubscriptionViewSet(viewsets.ModelViewSet):
@@ -118,7 +175,17 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
                                    .select_related('butcher', 'meat_item')
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        item = serializer.validated_data['meat_item']
+        qty = Decimal(str(serializer.validated_data['quantity_kg']))
+        price = item.price * qty
+        
+        serializer.save(
+            user=self.request.user,
+            meat_item_name=item.name,
+            subscription_price=price,
+            delivery_address=serializer.validated_data.get('delivery_address') or getattr(self.request.user.profile, 'bio', 'No Address Provided'),
+            delivery_phone=serializer.validated_data.get('delivery_phone') or getattr(self.request.user.profile, 'phone', '0000000000')
+        )
 
 
 class GymSubscriptionViewSet(viewsets.ModelViewSet):
@@ -134,7 +201,13 @@ class GymSubscriptionViewSet(viewsets.ModelViewSet):
                                       .select_related('butcher', 'meat_item')
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        item = serializer.validated_data['meat_item']
+        serializer.save(
+            user=self.request.user,
+            meat_item_name=item.name,
+            delivery_address=serializer.validated_data.get('delivery_address') or getattr(self.request.user.profile, 'bio', 'No Address Provided'),
+            delivery_phone=serializer.validated_data.get('delivery_phone') or getattr(self.request.user.profile, 'phone', '0000000000')
+        )
 
 
 class PetSubscriptionViewSet(viewsets.ModelViewSet):
@@ -150,7 +223,16 @@ class PetSubscriptionViewSet(viewsets.ModelViewSet):
                                       .select_related('meat_item')
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        item = serializer.validated_data.get('meat_item')
+        product_name = serializer.validated_data.get('product_name')
+        if item and not product_name:
+            product_name = item.name
+            
+        serializer.save(
+            user=self.request.user,
+            product_name=product_name or "Premium Selection",
+            delivery_address=serializer.validated_data.get('delivery_address') or getattr(self.request.user.profile, 'bio', 'No Address Provided')
+        )
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):
@@ -160,6 +242,32 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def redeem_points(self, request):
+        """
+        Redeem loyalty points for a benefit (e.g., Free Delivery voucher).
+        Cost: 100 points.
+        """
+        profile = self.get_queryset().get(user=request.user)
+        points_to_redeem = 100
+        
+        if profile.loyalty_points < points_to_redeem:
+            return Response({
+                'error': f'Insufficient points. You need {points_to_redeem} points to redeem a benefit.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        profile.loyalty_points -= points_to_redeem
+        profile.save()
+        
+        # In a real app, this would generate a Cupon or flag the order
+        logger.info(f"User {request.user.username} redeemed {points_to_redeem} points.")
+        
+        return Response({
+            'success': True,
+            'message': 'Benefit redeemed! Your next delivery is on us.',
+            'new_balance': profile.loyalty_points
+        })
 
     def get_queryset(self):
         return UserProfile.objects.filter(user=self.request.user).select_related('user')
@@ -174,10 +282,39 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user) \
-                            .select_related('butcher', 'user') \
-                            .prefetch_related('items__meat_item') \
-                            .order_by('-created_at')
+        user = self.request.user
+        base_qs = Order.objects.select_related('butcher', 'user') \
+                               .prefetch_related('items__meat_item') \
+                               .order_by('-created_at')
+        
+        if user.is_staff or user.is_superuser:
+            return base_qs
+            
+        if hasattr(user, 'butcher_profile'):
+            return base_qs.filter(butcher=user.butcher_profile)
+        
+        return base_qs.filter(user=user)
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    """
+    Customer reviews for shops and orders.
+    """
+    serializer_class = ReviewSerializer
+    
+    def get_permissions(self):
+        if self.action in ['create']:
+            return [IsAuthenticated()]
+        return [AllowAny()]
+
+    def get_queryset(self):
+        butcher_id = self.request.query_params.get('butcher_id')
+        if butcher_id:
+            return Review.objects.filter(butcher_id=butcher_id)
+        return Review.objects.all()
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
 @api_view(['POST'])
@@ -202,6 +339,20 @@ def create_order(request: Request) -> Response:
     data: Dict[str, Any] = request.data
     butcher_id: Optional[int] = data.get('butcher_id')
     items_data: List[Dict[str, Any]] = data.get('items', [])
+    is_sunday_special = data.get('is_sunday_special', False)
+
+    # 0. Saturday 12 PM Cutoff Logic
+    now = timezone.localtime()
+    if is_sunday_special:
+        # Weekday: 0=Mon, 5=Sat, 6=Sun
+        if now.weekday() == 5 and now.hour >= 12:
+            return Response({
+                'error': 'Sunday special delivery cutoff was 12 PM Saturday. Orders are now closed for tomorrow.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        if now.weekday() == 6:
+             return Response({
+                'error': 'Sunday special orders must be placed by Saturday 12 PM.'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     # Handle Guest User
     order_user = request.user if request.user.is_authenticated else None
@@ -215,6 +366,14 @@ def create_order(request: Request) -> Response:
     # 1. Validate Butcher Availability
     try:
         butcher = Butcher.objects.get(id=butcher_id, status='APPROVED', is_available=True)
+        
+        # 1.1 Daily Quota Check (Issue #14)
+        today_orders = Order.objects.filter(butcher=butcher, created_at__date=timezone.now().date()).count()
+        if today_orders >= butcher.daily_order_quota:
+            return Response({
+                'error': f'Butcher "{butcher.shop_name}" has reached their daily artisanal order limit ({butcher.daily_order_quota}). Please try another partner or check back tomorrow.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
     except Butcher.DoesNotExist:
         return Response({'error': 'Butcher not found or currently unavailable.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -243,8 +402,8 @@ def create_order(request: Request) -> Response:
             meat_item = MeatItem.objects.get(id=meat_item_id, butcher=butcher, status='AVAILABLE')
             
             # Use database price to prevent tampering (optional strict check)
-            # if abs(meat_item.price - price) > Decimal('0.5'):
-            #     return Response({'error': f'Price mismatch for {meat_item.name}'}, status=status.HTTP_400_BAD_REQUEST)
+            if abs(meat_item.price - price) > Decimal('0.5'):
+                return Response({'error': f'Price mismatch for {meat_item.name}'}, status=status.HTTP_400_BAD_REQUEST)
 
         except MeatItem.DoesNotExist:
              return Response({'error': f'Item ID {meat_item_id} is not available from this butcher.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -296,10 +455,22 @@ def create_order(request: Request) -> Response:
             )
 
             for item in validated_items:
+                meat_item = item['meat_item']
+                quantity = item['quantity']
+                
+                # Atomic stock deduction
+                if meat_item.quantity < quantity:
+                    raise Exception(f"Insufficient stock for {meat_item.name}")
+                
+                meat_item.quantity -= quantity
+                if meat_item.quantity == 0:
+                    meat_item.status = 'SOLD_OUT'
+                meat_item.save()
+
                 OrderItem.objects.create(
                     order=order,
-                    meat_item=item['meat_item'],
-                    quantity=item['quantity'],
+                    meat_item=meat_item,
+                    quantity=quantity,
                     price_at_order=item['price'],
                 )
     except Exception as e:
@@ -335,17 +506,20 @@ def contextual_ai(request: Request) -> Response:
             'PET': (
                 "You are an expert veterinary nutritionist at MeatHub. "
                 "Advise on safe, healthy meat options for pets (dogs/cats). "
-                "Prioritize natural, zero-waste cuts like chicken frames or organ meats."
+                "MeatHub provides raw, species-appropriate ancestral diets. "
+                "Prioritize natural, zero-waste cuts like chicken frames or organ meats available from our local Hyderabad butchers."
             ),
             'GYM': (
                 "You are a sports nutritionist at MeatHub. "
                 "Advise on high-protein meat sources for muscle building and recovery. "
-                "Suggest lean cuts like chicken breast, turkey, or lean mutton."
+                "Suggest lean cuts like chicken breast, turkey, or lean mutton. "
+                "MeatHub ensures transparency via cutting videos provided by our artisanal butchers."
             ),
             'GENERAL': (
-                "You are MeatHub's culinary expert. "
-                "Help customers choose the best cuts for their recipes, explain textures, "
-                "and suggest cooking methods. Be helpful and encouraging."
+                "You are MeatHub's culinary expert and guide to the Village Guild. "
+                "Help customers choose the best cuts from our Hyderabad-based butchers. "
+                "Explain textures, suggest cooking methods, and emphasize our transparency and local sourcing. "
+                "Be helpful, professional, and encouraging."
             )
         }
         
@@ -356,7 +530,7 @@ def contextual_ai(request: Request) -> Response:
              logger.warning("GEMINI_API_KEY not set. Returning simulated response.")
              ai_response = f"[Simulated AI] ({context}) {user_message}"
         else:
-            model = genai.GenerativeModel('gemini-pro')
+            model = genai.GenerativeModel('gemini-1.5-flash')
             full_prompt = f"{system_prompt}\n\nUser Question: {user_message}"
             response = model.generate_content(full_prompt)
             ai_response = response.text.strip()
@@ -387,6 +561,7 @@ def haversine(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@handle_api_errors
 def nearby_butchers(request: Request) -> Response:
     """
     Returns a list of butchers within a specified radius (default 5km).
@@ -396,16 +571,36 @@ def nearby_butchers(request: Request) -> Response:
         user_lat = float(request.query_params.get('lat', 17.4944))
         user_lng = float(request.query_params.get('lng', 78.3908))
         radius = float(request.query_params.get('radius', 5))
+        category = request.query_params.get('category', '').upper()
     except (ValueError, TypeError):
         return Response({'error': 'Invalid latitude, longitude, or radius.'}, status=status.HTTP_400_BAD_REQUEST)
 
     all_butchers = Butcher.objects.filter(status='APPROVED', is_available=True, latitude__isnull=False, longitude__isnull=False)
     
+    if category:
+        all_butchers = all_butchers.filter(meat_items__category__iexact=category).distinct()
+    
+    today = timezone.now().date()
+    
     nearby = []
     for butcher in all_butchers:
         dist = haversine(user_lng, user_lat, float(butcher.longitude), float(butcher.latitude))
         if dist <= radius:
-            # We use a simple dict here or could use the serializer
+            # 1.1 Calculate Load Factor (Issue #15)
+            # Higher load = lower priority
+            today_orders = Order.objects.filter(butcher=butcher, created_at__date=today).count()
+            load_factor = today_orders / butcher.daily_order_quota if butcher.daily_order_quota > 0 else 1.0
+
+            # Real avg rating from reviews
+            avg_rating_data = butcher.reviews.aggregate(avg=Avg('rating'))
+            avg_rating = avg_rating_data['avg']
+
+            # Active (in-progress) orders for busy indicator
+            active_order_count = Order.objects.filter(
+                butcher=butcher,
+                status__in=['CONFIRMED', 'PROCESSING']
+            ).count()
+            
             nearby.append({
                 'id': butcher.id,
                 'shop_name': butcher.shop_name,
@@ -414,18 +609,23 @@ def nearby_butchers(request: Request) -> Response:
                 'longitude': float(butcher.longitude),
                 'address': butcher.address,
                 'image_url': butcher.image_url,
-                'rating': "4.8" if butcher.is_official else "4.2", 
+                'rating': str(round(avg_rating, 1)) if avg_rating else None,
                 'delivery_time': 20 if butcher.is_official else 35,
-                'is_official': butcher.is_official
+                'is_official': butcher.is_official,
+                'hygiene_score': butcher.hygiene_score,
+                'load_factor': load_factor,
+                'active_orders': active_order_count,
+                'is_busy': active_order_count >= 5,
             })
 
-    # Sort: is_official first (True > False), then by distance
-    nearby.sort(key=lambda x: (not x['is_official'], x['distance_km']))
+    # Sort: is_official first (True > False), then by load_factor (lower first), then by distance
+    nearby.sort(key=lambda x: (not x['is_official'], x['load_factor'], x['distance_km']))
     
     return Response(nearby)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
+@handle_api_errors
 def official_items(request: Request) -> Response:
     """Returns items from MeatHub Official Flagship store."""
     items = MeatItem.objects.filter(butcher__is_official=True, status='AVAILABLE')
@@ -438,11 +638,13 @@ def official_items(request: Request) -> Response:
             'category': item.category,
             'image_url': item.image_url,
             'butcher_name': item.butcher.shop_name,
-            'butcher_id': item.butcher.id
+            'butcher_id': item.butcher.id,
+            'live_stream_url': item.butcher.live_stream_url if item.butcher.is_official else None
         })
     return Response(data)
 
 @api_view(['GET'])
+@handle_api_errors
 def village_sources(request: Request) -> Response:
     """
     List all registered village sources for transparency.
@@ -452,14 +654,22 @@ def village_sources(request: Request) -> Response:
     return Response(data)
 
 @api_view(['POST'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def upload_order_video(request: Request, order_id: int) -> Response:
     """
-    Uploads a cutting proof video for a specific order.
+    Uploads a cutting proof video URL for a specific order.
+    Butcher must own the order, or user must be staff.
     USP: Video Verification.
     """
     from django.shortcuts import get_object_or_404
     order = get_object_or_404(Order, id=order_id)
+
+    # Authorization: must be the butcher who owns this order, or staff
+    user = request.user
+    is_owner = hasattr(user, 'butcher_profile') and order.butcher == user.butcher_profile
+    if not is_owner and not user.is_staff:
+        return Response({'error': 'You do not have permission to upload video for this order.'}, status=status.HTTP_403_FORBIDDEN)
+
     video_url = request.data.get('video_url')
     
     if not video_url:
@@ -468,8 +678,27 @@ def upload_order_video(request: Request, order_id: int) -> Response:
     order.cutting_video_url = video_url
     order.save()
     
-    return Response({
-        'success': True, 
-        'order_id': order.id, 
-        'video_url': video_url
-    })
+    return Response({'success': True, 'message': 'Video uploaded successfully.', 'video_url': video_url})
+
+
+class ButcherWasteCollectionViewSet(viewsets.ModelViewSet):
+    queryset = ButcherWasteCollection.objects.all()
+    serializer_class = ButcherWasteCollectionSerializer
+
+    def get_permissions(self):
+        """Public read of available waste cuts; write/modify requires authentication."""
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        butcher_id = self.request.query_params.get('butcher_id')
+        if butcher_id:
+            return self.queryset.filter(butcher_id=butcher_id, is_available=True)
+        return self.queryset.filter(is_available=True)
+
+
+class PetFoodProductViewSet(viewsets.ModelViewSet):
+    queryset = PetFoodProduct.objects.all()
+    serializer_class = PetFoodProductSerializer
+    permission_classes = [AllowAny]

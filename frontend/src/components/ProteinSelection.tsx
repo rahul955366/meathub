@@ -61,7 +61,7 @@ export default function ProteinSelection() {
     ];
 
     const handleCategoryClick = (name: string) => {
-        router.push(`/butchers?q=${encodeURIComponent(name)}`);
+        router.push(`/category/${name.toLowerCase()}`);
     };
 
     return (

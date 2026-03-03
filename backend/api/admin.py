@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from .models import (
     UserProfile, Address, Butcher, MeatItem, Subscription, 
     GymSubscription, PetSubscription, Order, OrderItem, 
-    AIChatHistory, VillageSource
+    AIChatHistory, VillageSource, ButcherWasteCollection, PetFoodProduct
 )
 
 # Inline Admin for Addresses
@@ -60,10 +60,10 @@ class ButcherAdmin(admin.ModelAdmin):
 
 @admin.register(MeatItem)
 class MeatItemAdmin(admin.ModelAdmin):
-    list_display = ('name', 'butcher', 'price', 'quantity', 'status', 'is_in_stock')
-    list_filter = ('status', 'category', 'created_at')
+    list_display = ('name', 'butcher', 'price', 'quantity', 'category', 'status', 'is_gym_approved', 'is_pet_suitable', 'is_in_stock')
+    list_filter = ('status', 'category', 'is_gym_approved', 'is_pet_suitable', 'created_at')
     search_fields = ('name', 'butcher__shop_name')
-    list_editable = ('price', 'quantity', 'status')
+    list_editable = ('price', 'quantity', 'status', 'is_gym_approved', 'is_pet_suitable')
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
@@ -121,3 +121,18 @@ class AIChatHistoryAdmin(admin.ModelAdmin):
     def short_message(self, obj):
         return obj.message[:50] + '...' if len(obj.message) > 50 else obj.message
     short_message.short_description = 'User Message'
+
+
+@admin.register(ButcherWasteCollection)
+class ButcherWasteCollectionAdmin(admin.ModelAdmin):
+    list_display = ('butcher', 'waste_type', 'quantity_kg', 'price_per_kg', 'is_available', 'created_at')
+    list_filter = ('is_available', 'created_at')
+    search_fields = ('butcher__shop_name', 'waste_type')
+    list_editable = ('quantity_kg', 'is_available')
+
+
+@admin.register(PetFoodProduct)
+class PetFoodProductAdmin(admin.ModelAdmin):
+    list_display = ('name', 'price', 'is_vet_approved', 'created_at')
+    list_filter = ('is_vet_approved',)
+    search_fields = ('name', 'ingredients')

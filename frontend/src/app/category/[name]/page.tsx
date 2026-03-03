@@ -3,8 +3,9 @@ import ProductList from '@/components/ProductList';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { MeatItem } from '@/types';
+import AIChat from '@/components/AIChat';
 
-export default async function CategoryPage({ params }: { params: { name: string } }) {
+export default async function CategoryPage({ params }: { params: Promise<{ name: string }> }) {
     const { name } = await params;
     const allItems = await getMeatItems();
 
@@ -50,6 +51,7 @@ export default async function CategoryPage({ params }: { params: { name: string 
                         </div>
                     )}
                 </div>
+                <AIChat context="GENERAL" title="Nutrition Expert" />
             </div>
         </div>
     );

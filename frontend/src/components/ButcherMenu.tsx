@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Search, CheckCircle, ArrowRight, Store, Sparkles } from 'lucide-react';
+import { ArrowLeft, Search, CheckCircle, ArrowRight, Store, Sparkles, MapPin, Shell, Tv } from 'lucide-react';
 import Link from 'next/link';
+import { getMeatItems, getReviews } from '@/lib/api';
 import MenuItemList from './MenuItemList';
 import ShopMenuPad from './ShopMenuPad';
 import { useAppContext } from '@/context/AppContext';
-import { Butcher, MeatItem } from '@/types';
+import { Butcher, MeatItem, VillageSource } from '@/types';
 
 // Simple X icon for closing modals
 const X = ({ className }: { className?: string }) => (
@@ -20,18 +21,38 @@ interface ButcherMenuProps {
     allItems?: MeatItem[];
     allButchers?: Butcher[];
     defaultCategory?: string;
+    villageSources?: VillageSource[];
 }
 
 export default function ButcherMenu({
     butcher,
-    items,
+    items: initialItems,
     allItems = [],
     allButchers = [],
-    defaultCategory = 'Recommended'
+    defaultCategory = 'Recommended',
+    villageSources = [],
 }: ButcherMenuProps) {
     const [selectedItem, setSelectedItem] = useState<MeatItem | null>(null);
     const [activeCategory, setActiveCategory] = useState(defaultCategory);
+    const [reviews, setReviews] = useState<any[]>([]);
     const [localSearch, setLocalSearch] = useState('');
+    const [items, setItems] = useState<MeatItem[]>(initialItems);
+
+    useEffect(() => {
+        getReviews(butcher.id).then(setReviews);
+    }, [butcher.id]);
+
+    // C2: Real-time stock polling every 60 seconds
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            try {
+                const freshItems = await getMeatItems();
+                const butcherItems = freshItems.filter((i: MeatItem) => i.butcher === butcher.id);
+                if (butcherItems.length > 0) setItems(butcherItems);
+            } catch { /* silently ignore polling errors */ }
+        }, 60000);
+        return () => clearInterval(interval);
+    }, [butcher.id]);
 
     const { totalAmount, addToCart } = useAppContext();
 
@@ -44,7 +65,7 @@ export default function ButcherMenu({
     // Filter Logic for Main Product Feed
     const filteredItems = React.useMemo(() => {
         const baseFiltered = activeCategory === 'Recommended'
-            ? items.filter((i) => parseFloat(i.price) > 0).slice(0, 10)
+            ? items.filter((i) => parseFloat(i.price) > 0)
             : items.filter((i) => (i.category || 'Other').toUpperCase() === activeCategory.toUpperCase());
 
         return baseFiltered.filter((i) =>
@@ -59,7 +80,7 @@ export default function ButcherMenu({
             (it: MeatItem) => it.name.toLowerCase() === itemName.toLowerCase() && it.butcher !== butcher.id
         );
         const uniqueButcherIds = Array.from(new Set(matchingItems.map(it => it.butcher)));
-        return allButchers.filter(b => uniqueButcherIds.includes(b.id)).slice(0, 2);
+        return allButchers.filter(b => uniqueButcherIds.includes(b.id)).slice(0, 6);
     };
 
     const handleUniversalItemClick = (itemName: string) => {
@@ -138,12 +159,16 @@ export default function ButcherMenu({
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
-                                        <CheckCircle className="w-5 h-5" />
+                                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                        <Shell className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Certification</p>
-                                        <p className="text-xs font-black text-slate-700 whitespace-nowrap">Bio-Secure Verified</p>
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Hygiene Score</p>
+                                        <div className="flex gap-0.5 mt-0.5">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Shell key={i} size={10} className={i < (butcher.hygiene_score || 5) ? 'fill-blue-600' : 'text-blue-200'} />
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -157,11 +182,56 @@ export default function ButcherMenu({
                                     Pre-order Mutton Paya or Special Chicken Curry Cut by Sat night for 7 AM delivery.
                                 </p>
                             </div>
+
+                            {butcher.village_source && (
+                                <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 flex flex-col gap-3">
+                                    <div className="flex items-center gap-2 text-emerald-600">
+                                        <MapPin className="w-4 h-4" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Farm Sourced</span>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-black text-slate-900 group-hover:text-emerald-600 transition-colors">
+                                            {typeof butcher.village_source === 'object' ? (butcher.village_source as any).name : 'Partner Village Farms'}
+                                        </p>
+                                        <p className="text-[9px] font-bold text-slate-400 mt-1 italic uppercase">Traceable Farm-to-Fork</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     {/* COL 2: MAIN PRODUCTS (CENTER) */}
                     <div className="lg:col-span-6 space-y-8">
+                        {/* Flagship Live Stream Feed (Vision USP) - Restricted to ONLY official stores */}
+                        {butcher.is_official && butcher.live_stream_url && (
+                            <div className="bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10 group">
+                                <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 bg-rose-600 rounded-full animate-pulse" />
+                                        <h3 className="text-white text-[10px] font-black uppercase tracking-[0.3em]">Official Transparency Feed</h3>
+                                    </div>
+                                    <div className="flex items-center gap-2 bg-rose-600/20 px-3 py-1 rounded-full">
+                                        <Tv className="w-3 h-3 text-rose-500" />
+                                        <span className="text-rose-500 text-[8px] font-black uppercase tracking-widest">Live from Cutting Floor</span>
+                                    </div>
+                                </div>
+                                <div className="aspect-video relative bg-black">
+                                    <iframe
+                                        src={butcher.live_stream_url}
+                                        className="absolute inset-0 w-full h-full"
+                                        title="MeatHub Flagship Live Feed"
+                                        frameBorder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                    />
+                                </div>
+                                <div className="p-4 bg-white/5 backdrop-blur-md">
+                                    <p className="text-white/40 text-[9px] font-bold uppercase tracking-widest text-center italic">
+                                        Witness our hyper-hygienic processing standards in real-time.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                         {/* Mobile Category Tab (Visible only on mobile) */}
                         <div className="lg:hidden flex gap-3 overflow-x-auto pb-4 no-scrollbar">
                             {menuCategories.map(cat => (
@@ -253,7 +323,7 @@ export default function ButcherMenu({
                         >
                             <div className="relative h-72">
                                 <img
-                                    src={selectedItem.image_url || 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&sig=scorched_earth_modal'}
+                                    src={selectedItem.image_url || require('@/utils/imageHelpers').getAccurateImage(selectedItem.name, selectedItem.category || '')}
                                     className="w-full h-full object-cover"
                                     alt={selectedItem.name}
                                 />
@@ -273,6 +343,19 @@ export default function ButcherMenu({
                                     <h2 className="text-4xl font-black uppercase tracking-tighter italic text-slate-900 leading-none">
                                         {selectedItem.name}
                                     </h2>
+                                    {selectedItem.village_source && (() => {
+                                        const vsId = typeof selectedItem.village_source === 'number'
+                                            ? selectedItem.village_source
+                                            : parseInt(String(selectedItem.village_source));
+                                        const sourceName = villageSources.find(v => v.id === vsId)?.name
+                                            || selectedItem.village_source;
+                                        return (
+                                            <div className="mt-4 inline-flex items-center gap-2 bg-rose-50 border border-rose-100 px-4 py-2 rounded-xl">
+                                                <MapPin className="w-4 h-4 text-rose-600" />
+                                                <span className="text-xs font-black uppercase tracking-widest text-rose-900">Source: {sourceName}</span>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
                                 <p className="text-slate-500 font-medium text-base leading-relaxed">
                                     {selectedItem.description || "Freshly sourced from our verified bio-secure partners. Expertly cut and vacuum sealed for maximum freshness."}
@@ -300,30 +383,7 @@ export default function ButcherMenu({
                 )}
             </AnimatePresence>
 
-            {/* CART BAR */}
-            <AnimatePresence>
-                {totalAmount > 0 && (
-                    <motion.div
-                        initial={{ y: 100 }}
-                        animate={{ y: 0 }}
-                        exit={{ y: 100 }}
-                        className="fixed bottom-6 left-6 right-6 z-50 md:left-1/2 md:-translate-x-1/2 md:w-[600px]"
-                    >
-                        <Link href="/checkout">
-                            <div className="bg-rose-600 text-white p-5 rounded-[2.5rem] shadow-2xl flex items-center justify-between cursor-pointer hover:bg-rose-700 transition-all hover:scale-[1.02] shadow-rose-500/30">
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60 mb-1">Items in bag</span>
-                                    <span className="text-2xl font-black italic">₹{totalAmount}</span>
-                                </div>
-                                <div className="flex items-center gap-4 bg-white/20 px-8 py-4 rounded-[1.5rem] backdrop-blur-md">
-                                    <span className="text-sm font-black uppercase tracking-widest leading-none">Checkout</span>
-                                    <ArrowRight className="w-5 h-5" />
-                                </div>
-                            </div>
-                        </Link>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Note: CART BAR removed to avoid confusion with active orders. Use Navbar cart or clear cart to reset state. */}
         </div>
     );
 }

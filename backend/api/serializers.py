@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import UserProfile, Address, Butcher, MeatItem, Subscription, GymSubscription, PetSubscription, Order, OrderItem, AIChatHistory
+from .models import UserProfile, Address, Butcher, MeatItem, Subscription, GymSubscription, PetSubscription, Order, OrderItem, AIChatHistory, Review, ButcherWasteCollection, PetFoodProduct
 from decimal import Decimal
 import re
 from django.utils import timezone
@@ -26,6 +26,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['email'] = self.user.email
         data['first_name'] = self.user.first_name
         data['last_name'] = self.user.last_name
+        data['is_butcher'] = hasattr(self.user, 'butcher_profile')
         return data
 
 
@@ -59,13 +60,19 @@ class RegisterSerializer(serializers.ModelSerializer):
     username = serializers.CharField(required=True, min_length=3, max_length=30)
     first_name = serializers.CharField(required=True, min_length=1, max_length=100)
     last_name = serializers.CharField(required=False, max_length=100, allow_blank=True)
+    referral_code = serializers.CharField(required=False, max_length=20, allow_blank=True)
+    role = serializers.ChoiceField(choices=['USER', 'BUTCHER'], default='USER', write_only=True)
+    shop_name = serializers.CharField(required=False, max_length=255, allow_blank=True, write_only=True)
+    address = serializers.CharField(required=False, max_length=255, allow_blank=True, write_only=True)
+    phone = serializers.CharField(required=False, max_length=20, allow_blank=True, write_only=True)
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'confirm_password', 'email', 'first_name', 'last_name')
+        fields = ('username', 'password', 'confirm_password', 'email', 'first_name', 'last_name', 'referral_code', 'role', 'shop_name', 'address', 'phone')
 
     def validate_username(self, value):
         value = value.strip()
+        logger.debug(f"Validating username: {value}")
         
         if not value:
             raise serializers.ValidationError("Username cannot be empty")
@@ -73,14 +80,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         if not (3 <= len(value) <= 30):
             raise serializers.ValidationError("Username must be between 3 and 30 characters")
         
-        if not re.match(r'^[a-zA-Z0-9_]+$', value):
-            raise serializers.ValidationError("Username can only contain letters, numbers, and underscores")
-        
-        if not value[0].isalpha():
-            raise serializers.ValidationError("Username must start with a letter")
+        if not re.match(r'^[a-zA-Z0-9_\.]+$', value):
+            raise serializers.ValidationError("Login name can only contain letters, numbers, underscores and dots.")
         
         if User.objects.filter(username__iexact=value).exists():
-            raise serializers.ValidationError("This username is already taken.")
+            raise serializers.ValidationError("This login name is already taken.")
         
         return value.lower()
 
@@ -106,51 +110,43 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def validate_password(self, value):
         if len(value) < 8:
-            raise serializers.ValidationError("Password must be at least 8 characters long")
-        
-        common_passwords = {'password', '12345678', 'qwerty123', 'admin123', 'password123'}
-        if value.lower() in common_passwords:
-            raise serializers.ValidationError("This password is too common.")
-        
-        if not (any(c.isalpha() for c in value) and any(c.isdigit() for c in value)):
-            raise serializers.ValidationError("Password must contain both letters and numbers")
-        
+            raise serializers.ValidationError("Password must be at least 8 characters.")
         return value
 
     def validate_first_name(self, value):
         value = value.strip()
         if not value:
-            raise serializers.ValidationError("First name is required")
+            raise serializers.ValidationError("Please enter your name.")
         
-        if len(value) > 100:
-            raise serializers.ValidationError("First name is too long")
-        
-        if not re.match(r"^[a-zA-Z\s\-']+$", value):
-            raise serializers.ValidationError("First name contains invalid characters")
+        if len(value) > 200:
+            raise serializers.ValidationError("Name is too long.")
         
         return value.title()
 
     def validate_last_name(self, value):
-        if not value:
-            return value
-        
-        value = value.strip()
-        
-        if len(value) > 100:
-            raise serializers.ValidationError("Last name is too long")
-        
-        if not re.match(r"^[a-zA-Z\s\-']+$", value):
-            raise serializers.ValidationError("Last name contains invalid characters")
-        
-        return value.title()
+        return value.strip().title() if value else ''
 
     def validate(self, data):
+        logger.debug(f"Register Validation Data: { {k: v for k, v in data.items() if 'password' not in k} }")
         if data.get('password') != data.get('confirm_password'):
             raise serializers.ValidationError({"password": "Passwords do not match."})
+        
+        if data.get('role') == 'BUTCHER':
+            if not data.get('shop_name'):
+                raise serializers.ValidationError({"shop_name": "Shop name is required for butcher registration."})
+            if not data.get('address'):
+                raise serializers.ValidationError({"address": "Shop address is required for butcher registration."})
+            if not data.get('phone'):
+                raise serializers.ValidationError({"phone": "Phone number is required for butcher registration."})
+        
         return data
-
     def create(self, validated_data):
         validated_data.pop('confirm_password')
+        role = validated_data.pop('role', 'USER')
+        shop_name = validated_data.pop('shop_name', '')
+        address = validated_data.pop('address', '')
+        phone = validated_data.pop('phone', '')
+        referral_code = validated_data.pop('referral_code', None)
         
         try:
             user = User.objects.create_user(
@@ -161,13 +157,38 @@ class RegisterSerializer(serializers.ModelSerializer):
                 last_name=validated_data.get('last_name', ''),
             )
             
+            # Identify referrer
+            referrer = None
+            if referral_code:
+                try:
+                    referrer = UserProfile.objects.get(referral_code=referral_code.strip().upper())
+                    # Reward referrer
+                    referrer.loyalty_points += 50 
+                    referrer.save()
+                    logger.info(f"Referral reward: {referrer.user.username} earned 50 points via {user.username}")
+                except UserProfile.DoesNotExist:
+                    logger.warning(f"Invalid referral code used: {referral_code}")
+
             UserProfile.objects.create(
                 user=user,
                 first_name=validated_data['first_name'],
-                last_name=validated_data.get('last_name', '')
+                last_name=validated_data.get('last_name', ''),
+                referred_by=referrer,
+                phone=phone
             )
+
+            if role == 'BUTCHER':
+                from .models import Butcher
+                Butcher.objects.create(
+                    user=user,
+                    shop_name=shop_name,
+                    address=address,
+                    phone_number=phone,
+                    status='APPROVED',
+                    is_available=True
+                )
             
-            logger.info(f"New user registered: {user.username} ({user.email})", extra={'user_id': user.id})
+            logger.info(f"New user registered: {user.username} ({user.email}) as {role}", extra={'user_id': user.id})
             
             return user
             
@@ -190,9 +211,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'id', 'user', 'first_name', 'last_name', 'full_name', 'phone',
             'bio', 'profile_image_url', 'gender',
             'date_of_birth', 'preferred_butcher_id',
+            'referral_code', 'loyalty_points',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'user', 'referral_code', 'loyalty_points', 'created_at', 'updated_at']
     
     def validate_phone(self, value):
         """
@@ -239,13 +261,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if value < max_age_date:
             raise serializers.ValidationError("Invalid date of birth")
         
-        return value
-
 
 class ButcherSerializer(serializers.ModelSerializer):
     """
     Serializer for Butcher shops.
     """
+
+    rating = serializers.FloatField(read_only=True)
+    total_orders = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Butcher
         fields = [
@@ -253,9 +277,11 @@ class ButcherSerializer(serializers.ModelSerializer):
             'description', 'latitude', 'longitude',
             'service_radius_km', 'image_url',
             'opening_time', 'closing_time',
-            'is_available', 'status', 'is_official'
+            'is_available', 'status', 'is_official',
+            'hygiene_score', 'live_stream_url',
+            'rating', 'total_orders'
         ]
-        read_only_fields = ['id', 'status', 'created_at']
+        read_only_fields = ['id', 'status', 'created_at', 'rating', 'total_orders']
 
     def validate_phone_number(self, value):
         cleaned = re.sub(r'[\s\-\(\)]', '', value)
@@ -279,7 +305,9 @@ class MeatItemSerializer(serializers.ModelSerializer):
             'id', 'butcher', 'butcher_name', 'name',
             'description', 'price', 'quantity',
             'category', 'image_url', 'status', 
-            'is_in_stock', 'village_source', 'created_at'
+            'is_in_stock', 'village_source', 'created_at',
+            'protein_g', 'fat_g', 'calories', 
+            'is_gym_approved', 'is_pet_suitable', 'product_type'
         ]
         read_only_fields = ['id', 'butcher_name', 'created_at', 'status']
     
@@ -344,7 +372,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
             'period', 'delivery_option', 'primary_day_of_week',
             'delivery_time', 'is_sunday_special', 'active',
             'next_run_date', 'delivery_address', 'delivery_phone',
-            'subscription_price', 'notes',
+            'subscription_price', 'skip_dates', 'notes',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'user', 'butcher_name', 'created_at', 'updated_at']
@@ -359,8 +387,9 @@ class GymSubscriptionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'butcher', 'meat_item', 
             'meat_item_name', 'daily_quantity', 'delivery_time',
+            'training_goal',
             'active', 'next_delivery_date', 'delivery_address',
-            'delivery_phone', 'notes', 'created_at', 'updated_at'
+            'delivery_phone', 'skip_dates', 'notes', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
 
@@ -375,9 +404,25 @@ class PetSubscriptionSerializer(serializers.ModelSerializer):
             'id', 'user', 'pet_type', 'meat_item',
             'product_name', 'quantity_kg', 'schedule_type',
             'active', 'next_delivery_date', 'delivery_address',
-            'created_at', 'updated_at'
+            'skip_dates', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+
+class ButcherWasteCollectionSerializer(serializers.ModelSerializer):
+    butcher_name = serializers.CharField(source='butcher.shop_name', read_only=True)
+
+    class Meta:
+        model = ButcherWasteCollection
+        fields = ['id', 'butcher', 'butcher_name', 'waste_type', 'quantity_kg', 'price_per_kg', 'is_available', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
+class PetFoodProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PetFoodProduct
+        fields = ['id', 'name', 'description', 'price', 'image_url', 'ingredients', 'is_vet_approved', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -399,19 +444,25 @@ class OrderSerializer(serializers.ModelSerializer):
     """
     items = OrderItemSerializer(many=True, read_only=True)
     butcher_name = serializers.CharField(source='butcher.shop_name', read_only=True)
+    butcher_lat = serializers.DecimalField(source='butcher.latitude', max_digits=10, decimal_places=7, read_only=True)
+    butcher_lng = serializers.DecimalField(source='butcher.longitude', max_digits=10, decimal_places=7, read_only=True)
+    user_email = serializers.SerializerMethodField()
     butcher_is_official = serializers.BooleanField(source='butcher.is_official', read_only=True)
-    user_email = serializers.EmailField(source='user.email', read_only=True)
-    is_cancellable = serializers.ReadOnlyField()
+
+    def get_user_email(self, obj):
+        return obj.user.email if obj.user else "Guest"
 
     class Meta:
         model = Order
         fields = [
             'id', 'user', 'user_email', 'butcher', 'butcher_name', 'butcher_is_official',
-            'total_amount', 'status', 'payment_method', 
+            'butcher_lat', 'butcher_lng',
+            'total_amount', 'status', 'payment_method', 'payment_status',
             'delivery_address', 'delivery_phone', 'cutting_video_url',
-            'created_at', 'updated_at', 'items', 'is_cancellable'
+            'is_sunday_special', 'sunday_slot', 'status_history', 'created_at', 'updated_at', 
+            'items', 'is_cancellable'
         ]
-        read_only_fields = ['id', 'user', 'user_email', 'butcher_name', 'total_amount', 'status', 'created_at', 'updated_at', 'items']
+        read_only_fields = ['id', 'user', 'user_email', 'butcher_name', 'total_amount', 'created_at', 'updated_at', 'items']
 
     def validate_delivery_phone(self, value):
         cleaned = re.sub(r'[\s\-\(\)]', '', value)
@@ -428,3 +479,15 @@ class AIChatHistorySerializer(serializers.ModelSerializer):
         model = AIChatHistory
         fields = ['id', 'user', 'context', 'message', 'response', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    """
+    Serializer for customer reviews.
+    """
+    user_name = serializers.CharField(source='user.username', read_only=True)
+    
+    class Meta:
+        model = Review
+        fields = ['id', 'order', 'user', 'user_name', 'butcher', 'rating', 'comment', 'created_at']
+        read_only_fields = ['id', 'created_at']

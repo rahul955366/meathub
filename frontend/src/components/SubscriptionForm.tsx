@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Clock, Weight, ChevronRight, CheckCircle2, ShieldCheck, Zap, Dog, Target } from 'lucide-react';
-import { getMeatItems, getButchers, createSubscription, createGymSubscription, createPetSubscription } from '@/lib/api';
-import { MeatItem, Butcher } from '@/types';
+import { getMeatItems, getButchers, createSubscription, createGymSubscription, createPetSubscription, getUserProfile } from '@/lib/api';
+import { MeatItem, Butcher, Subscription, GymSubscription, PetSubscription, UserProfile } from '@/types';
 import { useAppContext } from '@/context/AppContext';
 import toast from 'react-hot-toast';
 
@@ -13,31 +13,42 @@ interface SubscriptionFormProps {
     planId?: string;
     petType?: string;
     gymGoal?: string;
+    initialItemId?: string | number;
     onClose: () => void;
 }
 
-export default function SubscriptionForm({ type, planId, petType, gymGoal, onClose }: SubscriptionFormProps) {
+export default function SubscriptionForm({ type, planId, petType, gymGoal, initialItemId, onClose }: SubscriptionFormProps) {
     const { token } = useAppContext();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [butchers, setButchers] = useState<Butcher[]>([]);
     const [meatItems, setMeatItems] = useState<MeatItem[]>([]);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
 
     const [formData, setFormData] = useState({
         butcherId: '',
-        meatItemId: '',
+        meatItemId: initialItemId ? initialItemId.toString() : '',
         quantity: 2,
         frequency: planId || 'WEEKLY',
         timeSlot: 'MORNING',
         // Specialized
-        proteinGoal: gymGoal || 'Maintenance',
+        trainingGoal: gymGoal || 'MAINTAIN', // Renamed from proteinGoal to match backend Enum choices
         petActivity: 'Moderate'
     });
 
     useEffect(() => {
-        getButchers().then(setButchers);
+        getButchers().then(data => {
+            setButchers(data);
+            if (type !== 'GENERAL') {
+                const flagship = data.find(b => b.is_official) || data[0];
+                if (flagship) {
+                    setFormData(prev => ({ ...prev, butcherId: flagship.id.toString() }));
+                }
+            }
+        });
         getMeatItems().then(setMeatItems);
-    }, []);
+        if (token) getUserProfile(token).then(setProfile);
+    }, [token, type]);
 
     const handleNext = () => setStep(step + 1);
     const handleBack = () => setStep(step - 1);
@@ -48,32 +59,61 @@ export default function SubscriptionForm({ type, planId, petType, gymGoal, onClo
             return;
         }
 
+        const selectedItem = meatItems.find(m => m.id.toString() === formData.meatItemId);
+        const selectedButcher = butchers.find(b => b.id.toString() === formData.butcherId);
+
+        if (!selectedItem || !selectedButcher) {
+            toast.error("Invalid selection.");
+            return;
+        }
+
         setLoading(true);
         try {
+            const deliveryAddress = profile?.addresses?.[0]?.street || profile?.bio || "Please update address";
+            const deliveryPhone = profile?.phone || "0000000000";
+            const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+
             let success = false;
             if (type === 'GENERAL') {
                 success = await createSubscription(token, {
-                    butcher_id: parseInt(formData.butcherId),
-                    meat_item_id: parseInt(formData.meatItemId),
-                    quantity_kg: formData.quantity,
+                    butcher: selectedButcher.id,
+                    meat_item: selectedItem.id,
+                    meat_item_name: selectedItem.name,
+                    quantity_kg: formData.quantity.toString(),
                     period: formData.frequency,
-                    delivery_time_slot: formData.timeSlot
-                });
+                    delivery_option: 'SUNDAY_ONLY',
+                    primary_day_of_week: 'SUNDAY',
+                    delivery_time: formData.timeSlot === 'MORNING' ? '08:00:00' : '18:00:00',
+                    next_run_date: tomorrow,
+                    delivery_address: deliveryAddress,
+                    delivery_phone: deliveryPhone,
+                    subscription_price: calculateTotal().toString(),
+                    active: true
+                } as Partial<Subscription>);
             } else if (type === 'GYM') {
                 success = await createGymSubscription(token, {
-                    meat_item_id: parseInt(formData.meatItemId),
+                    butcher: selectedButcher.id,
+                    meat_item: selectedItem.id,
+                    meat_item_name: selectedItem.name,
                     daily_quantity: `${formData.quantity} servings`,
-                    goal: formData.proteinGoal,
-                    next_delivery_date: new Date(Date.now() + 86400000).toISOString().split('T')[0]
-                });
+                    training_goal: formData.trainingGoal,
+                    delivery_time: '06:00:00',
+                    next_delivery_date: tomorrow,
+                    delivery_address: deliveryAddress,
+                    delivery_phone: deliveryPhone,
+                    active: true
+                } as Partial<GymSubscription>);
             } else {
                 success = await createPetSubscription(token, {
-                    product_name: "Premium Selection",
-                    quantity_kg: formData.quantity,
-                    pet_type: (petType || "DOG").toUpperCase(),
-                    schedule_type: formData.frequency,
-                    next_delivery_date: new Date(Date.now() + 86400000).toISOString().split('T')[0]
-                });
+                    meat_item: selectedItem.id,
+                    product_name: selectedItem.name,
+                    quantity_kg: formData.quantity.toString(),
+                    pet_type: (petType || "DOG") as 'DOG' | 'CAT',
+                    schedule_type: (formData.frequency === 'BI-WEEKLY' ? 'WEEKLY' : formData.frequency) as any, // Sync with backend enum
+                    next_delivery_date: tomorrow,
+                    delivery_address: deliveryAddress,
+                    active: true
+                } as Partial<PetSubscription>);
             }
 
             if (success) {
@@ -87,6 +127,16 @@ export default function SubscriptionForm({ type, planId, petType, gymGoal, onClo
         } finally {
             setLoading(false);
         }
+    };
+
+    const calculateTotal = () => {
+        const item = meatItems.find(m => m.id.toString() === formData.meatItemId);
+        if (!item) return 0;
+        let base = Number(item.price) * formData.quantity;
+        // Frequency discount logic
+        if (formData.frequency === 'WEEKLY') base *= 4 * 0.9; // 10% off
+        if (formData.frequency === 'BI-WEEKLY') base *= 2 * 0.95; // 5% off
+        return Math.round(base);
     };
 
     const containerVariants = {
@@ -133,107 +183,109 @@ export default function SubscriptionForm({ type, planId, petType, gymGoal, onClo
                             <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                                 {/* Specialized Heading */}
                                 {type === 'GYM' && (
-                                    <div className="p-6 bg-emerald-50 rounded-3xl border border-emerald-100 flex items-center gap-4 mb-4">
-                                        <Target className="w-8 h-8 text-emerald-600" />
-                                        <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Performance Protocol</p>
-                                            <p className="text-xs font-bold text-emerald-800">Optimizing for {formData.proteinGoal}</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {type === 'PET' && (
-                                    <div className="p-6 bg-rose-50 rounded-3xl border border-rose-100 flex items-center gap-4 mb-4">
-                                        <Dog className="w-8 h-8 text-rose-600" />
-                                        <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-rose-600">Bio-Correct Nutrition</p>
-                                            <p className="text-xs font-bold text-rose-800">Feeding Calculator Active</p>
-                                        </div>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        {[
+                                            { id: 'CUT', label: 'CUT', sub: 'Lean/Loss', Icon: Target },
+                                            { id: 'BULK', label: 'BULK', sub: 'Gain/Mass', Icon: Zap },
+                                            { id: 'MAINTAIN', label: 'STAY', sub: 'Performance', Icon: ShieldCheck }
+                                        ].map(goal => (
+                                            <button
+                                                key={goal.id}
+                                                onClick={() => setFormData({ ...formData, trainingGoal: goal.id })}
+                                                className={`p-4 rounded-3xl border-2 transition-all flex flex-col items-center gap-2 ${formData.trainingGoal === goal.id ? 'bg-rose-50 border-rose-500 scale-105 shadow-xl' : 'bg-slate-50 border-slate-100 opacity-60'}`}
+                                            >
+                                                <goal.Icon className={`w-6 h-6 ${formData.trainingGoal === goal.id ? 'text-rose-600' : 'text-slate-400'}`} />
+                                                <div className="text-center">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest leading-none">{goal.label}</p>
+                                                    <p className="text-[8px] font-bold text-slate-400 mt-0.5">{goal.sub}</p>
+                                                </div>
+                                            </button>
+                                        ))}
                                     </div>
                                 )}
 
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Master Butcher Selection</label>
-                                    <select
-                                        value={formData.butcherId}
-                                        onChange={(e) => setFormData({ ...formData, butcherId: e.target.value })}
-                                        className="w-full h-16 px-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-bold focus:border-rose-600 outline-none transition-all appearance-none"
-                                    >
-                                        <option value="">Select Butcher</option>
-                                        {butchers.map(b => <option key={b.id} value={b.id}>{b.shop_name}</option>)}
-                                    </select>
-                                </div>
-
-                                {/* GYM Specifics */}
-                                {type === 'GYM' && (
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Select Your Protein Target</label>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Training Goal</label>
-                                            <select
-                                                value={formData.proteinGoal}
-                                                onChange={(e) => setFormData({ ...formData, proteinGoal: e.target.value })}
-                                                className="w-full h-16 px-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-bold focus:border-rose-600 outline-none transition-all appearance-none"
-                                            >
-                                                <option value="Maintenance">Maintenance</option>
-                                                <option value="Bulking">Bulking (Surplus)</option>
-                                                <option value="Cutting">Cutting (Deficit)</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Lean Source Only</label>
-                                            <div className="w-full h-16 px-6 rounded-2xl bg-emerald-50 border-2 border-emerald-100 flex items-center gap-3">
-                                                <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                                                <span className="text-[10px] font-black text-emerald-800 uppercase">Verified Lean</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* PET Specifics */}
-                                {type === 'PET' && (
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Activity Level</label>
-                                            <select
-                                                value={formData.petActivity}
-                                                onChange={(e) => setFormData({ ...formData, petActivity: e.target.value })}
-                                                className="w-full h-16 px-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-bold focus:border-rose-600 outline-none transition-all appearance-none"
-                                            >
-                                                <option value="Low">Sedentary (Low)</option>
-                                                <option value="Moderate">Active (Moderate)</option>
-                                                <option value="High">Working (High)</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Daily Serving Suggestion</label>
-                                            <div className="w-full h-16 px-6 rounded-2xl bg-rose-50 border-2 border-rose-100 flex items-center justify-between">
-                                                <span className="text-[10px] font-black text-rose-800 uppercase">{formData.petActivity === 'High' ? '750g/Day' : '500g/Day'}</span>
-                                                <Zap className="w-4 h-4 text-rose-600 animate-pulse" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Protein Selection</label>
-                                    <select
-                                        value={formData.meatItemId}
-                                        onChange={(e) => setFormData({ ...formData, meatItemId: e.target.value })}
-                                        className="w-full h-16 px-6 rounded-2xl bg-slate-50 border-2 border-slate-100 font-bold focus:border-rose-600 outline-none transition-all appearance-none"
-                                    >
-                                        <option value="">Select Item</option>
                                         {meatItems.filter(m => {
-                                            if (type === 'GYM') return m.category === 'CHICKEN' || m.name.includes('Lean');
-                                            if (type === 'PET') return m.name.includes('Raw') || m.category === 'FISH' || m.category === 'MUTTON';
+                                            // Enforce Official Flagship items for GYM and PET as per vision
+                                            const isOfficial = butchers.find(b => b.id === m.butcher)?.is_official;
+                                            if (type === 'GYM') return isOfficial && (m.category === 'CHICKEN' || m.name.includes('Lean') || m.name.includes('Breast'));
+                                            if (type === 'PET') return isOfficial && (m.name.includes('Raw') || m.category === 'FISH' || m.category === 'MUTTON');
                                             return true;
-                                        }).map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                                    </select>
+                                        }).map(m => (
+                                            <button
+                                                key={m.id}
+                                                onClick={() => setFormData({ ...formData, meatItemId: m.id.toString() })}
+                                                className={`p-4 rounded-2xl border-2 text-left transition-all ${formData.meatItemId === m.id.toString() ? 'border-rose-600 bg-rose-50/50 shadow-md' : 'border-slate-100 hover:border-slate-200'}`}
+                                            >
+                                                <p className="text-[10px] font-black uppercase tracking-tight text-slate-900 line-clamp-1">{m.name}</p>
+                                                <p className="text-[10px] font-bold text-rose-600 italic">₹{m.price}/KG</p>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
+
+                                {type === 'GENERAL' && (
+                                    <div className="space-y-2 pt-4 border-t border-slate-100">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2">Assigned Master Butcher</label>
+                                        <select
+                                            value={formData.butcherId}
+                                            onChange={(e) => setFormData({ ...formData, butcherId: e.target.value })}
+                                            className="w-full h-16 px-6 rounded-2xl bg-neutral-900 text-white font-bold focus:ring-2 focus:ring-rose-600 outline-none transition-all appearance-none italic"
+                                        >
+                                            <option value="">Select Butcher (Nearest assigned by default)</option>
+                                            {butchers.map(b => <option key={b.id} value={b.id}>{b.shop_name} {b.is_official ? '★ Official' : ''}</option>)}
+                                        </select>
+                                    </div>
+                                )}
                             </motion.div>
                         )}
 
                         {step === 2 && (
                             <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                                <div className="p-8 bg-slate-900 rounded-[3rem] text-white space-y-6 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-8 opacity-10">
+                                        <ShieldCheck className="w-32 h-32" />
+                                    </div>
+                                    <div className="space-y-4 relative z-10">
+                                        <div className="flex justify-between items-center">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-500">Subscription summary</p>
+                                            <div className="bg-rose-600 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest animate-pulse">Save 25%</div>
+                                        </div>
+                                        <div className="flex justify-between items-baseline">
+                                            <h3 className="text-4xl font-black italic tracking-tighter uppercase">₹{calculateTotal()}</h3>
+                                            <p className="text-xs text-slate-400 font-bold line-through">₹{Math.round(calculateTotal() * 1.33)}</p>
+                                        </div>
+
+                                        <div className="space-y-3 pt-6 border-t border-slate-800">
+                                            <div className="flex items-center gap-3 text-xs font-bold text-slate-300">
+                                                <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 text-[10px] font-black italic">✓</div>
+                                                <span>4 Priority Deliveries/Month</span>
+                                            </div>
+                                            <div className="flex items-center gap-3 text-xs font-bold text-slate-300">
+                                                <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 text-[10px] font-black italic">✓</div>
+                                                <span>Zero Delivery Charges Forever</span>
+                                            </div>
+                                            <div className="flex items-center gap-3 text-xs font-bold text-slate-300">
+                                                <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 text-[10px] font-black italic">✓</div>
+                                                <span>Verified Freshness Guarantee</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-8 p-4 bg-white/5 rounded-2xl border border-white/10">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">Benefit breakdown</p>
+                                            <div className="flex justify-between text-xs font-bold italic">
+                                                <span>Market Price (4kg)</span>
+                                                <span className="text-slate-400">₹{Math.round(calculateTotal() * 1.15)}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs font-bold italic mt-1">
+                                                <span>MeatHub Discount</span>
+                                                <span className="text-rose-500">-₹{Math.round(calculateTotal() * 0.15)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center px-2">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Logistics Volume (KG)</label>

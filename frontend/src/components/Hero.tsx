@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Search, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight, Play } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Hero() {
@@ -15,11 +15,36 @@ export default function Hero() {
     };
 
     return (
-        <div className="relative bg-slate-900 text-white overflow-hidden min-h-[85vh] flex items-center">
-            {/* ... background ... */}
-            <div className="relative container mx-auto px-4 py-20">
-                <div className="max-w-4xl space-y-8">
-                    {/* ... header ... */}
+        <div className="relative bg-slate-900 text-white overflow-hidden min-h-[90vh] flex items-center">
+            {/* High-Fidelity Video/Image Background */}
+            <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/60 to-transparent z-10" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-slate-900/40 z-10" />
+                <img
+                    src="https://images.unsplash.com/photo-1602491675983-c42bcf9a1a31?auto=format&fit=crop&w=1920&q=80"
+                    alt="Fresh Premium Meat - Raw Mutton Cuts"
+                    className="w-full h-full object-cover opacity-40 scale-105"
+                />
+            </div>
+
+            <div className="relative container mx-auto px-4 py-20 z-20">
+                <div className="max-w-4xl space-y-10">
+                    <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="space-y-4"
+                    >
+                        <span className="text-rose-500 text-xs font-black uppercase tracking-[0.4em] flex items-center gap-3">
+                            <span className="w-8 h-px bg-rose-500" /> DIRECT FROM LOCAL BUTCHERS
+                        </span>
+                        <h1 className="text-7xl md:text-9xl font-black leading-[0.85] tracking-tighter uppercase italic">
+                            Fresh Meat. <br />
+                            <span className="text-rose-600 not-italic">No Compromise.</span>
+                        </h1>
+                        <p className="text-xl text-slate-400 font-medium italic max-w-xl">
+                            The transparency you deserve. Watch your meat being cut, know your source, and get it delivered in 45 minutes.
+                        </p>
+                    </motion.div>
 
                     {/* Global Search Bar */}
                     <motion.div
@@ -61,16 +86,16 @@ export default function Hero() {
                         className="flex flex-wrap gap-4"
                     >
                         <Link
-                            href="/shop"
-                            className="h-16 px-10 bg-slate-900/50 hover:bg-slate-900 border border-white/10 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center gap-3 transition-all hover:scale-105"
+                            href="/butchers"
+                            className="h-16 px-10 bg-rose-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest flex items-center gap-3 hover:bg-rose-700 hover:scale-105 transition-all shadow-xl shadow-rose-900/40 group"
                         >
-                            Start Shopping <ArrowRight className="w-5 h-5" />
+                            Start Sourcing <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
                         </Link>
                         <Link
                             href="/store"
-                            className="h-16 px-10 bg-white/5 hover:bg-white/10 backdrop-blur border border-white/10 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center gap-3 transition-colors hover:border-white/30"
+                            className="h-16 px-10 bg-white/5 hover:bg-white/10 backdrop-blur border border-white/10 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center gap-3 transition-colors hover:border-white/30 group"
                         >
-                            Watch Live
+                            <Play className="w-5 h-5 fill-white" /> Cutting Video Proof
                         </Link>
                     </motion.div>
 

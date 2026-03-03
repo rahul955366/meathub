@@ -4,6 +4,18 @@ export interface User {
     email: string;
     first_name: string;
     last_name: string;
+    is_staff?: boolean;
+    is_superuser?: boolean;
+    is_butcher?: boolean;
+}
+
+export interface Address {
+    id: number;
+    street: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    is_default: boolean;
 }
 
 export interface UserProfile {
@@ -18,6 +30,9 @@ export interface UserProfile {
     gender?: string;
     date_of_birth?: string;
     preferred_butcher_id?: number;
+    addresses?: Address[];
+    referral_code?: string;
+    loyalty_points: number;
     created_at: string;
 }
 
@@ -36,6 +51,12 @@ export interface Butcher {
     is_available: boolean;
     is_official: boolean;
     status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    hygiene_score?: number;
+    average_rating?: number;
+    active_orders?: number;
+    is_busy?: boolean;
+    village_source?: string | object;
+    live_stream_url?: string;
 }
 
 export interface MeatItem {
@@ -51,6 +72,14 @@ export interface MeatItem {
     status: 'AVAILABLE' | 'SOLD_OUT' | 'HIDDEN';
     is_in_stock: boolean;
     created_at: string;
+    // Phase 14 macro & classification fields
+    protein_g?: number | null;
+    fat_g?: number | null;
+    calories?: number | null;
+    is_gym_approved?: boolean;
+    is_pet_suitable?: boolean;
+    product_type?: string;
+    village_source?: string;
 }
 
 export interface OrderItem {
@@ -62,20 +91,45 @@ export interface OrderItem {
     subtotal: number;
 }
 
+export interface OrderStatusEntry {
+    status: string;
+    timestamp: string;
+    message: string;
+}
+
 export interface Order {
     id: number;
-    user: number;
+    user: number | null;
     user_email: string;
     butcher: number;
     butcher_name: string;
+    butcher_is_official: boolean;
+    butcher_lat?: number;
+    butcher_lng?: number;
     total_amount: string;
     status: 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
     payment_method: 'COD' | 'UPI' | 'CARD';
+    payment_status?: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
     delivery_address: string;
     delivery_phone: string;
+    cutting_video_url?: string;
+    status_history: OrderStatusEntry[];
     created_at: string;
     items: OrderItem[];
     is_cancellable: boolean;
+    is_sunday_special?: boolean;
+    sunday_slot?: string;
+}
+
+export interface Review {
+    id: number;
+    order: number;
+    user: number | null;
+    user_name: string;
+    butcher: number;
+    rating: number;
+    comment: string;
+    created_at: string;
 }
 
 export interface CartItem {
@@ -114,6 +168,7 @@ export interface Subscription {
     delivery_address: string;
     delivery_phone: string;
     subscription_price: string;
+    skip_dates?: string[];
     created_at: string;
 }
 
@@ -129,6 +184,8 @@ export interface GymSubscription {
     next_delivery_date: string;
     delivery_address: string;
     delivery_phone: string;
+    training_goal?: 'CUT' | 'BULK' | 'MAINTAIN';
+    skip_dates?: string[];
 }
 
 export interface PetSubscription {
@@ -141,4 +198,5 @@ export interface PetSubscription {
     active: boolean;
     next_delivery_date: string;
     delivery_address: string;
+    skip_dates?: string[];
 }

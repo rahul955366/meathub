@@ -2,12 +2,21 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, MapPin, Clock, Package, ArrowRight, Download, Share2, Video } from 'lucide-react';
+import { CheckCircle2, MapPin, Clock, Package, ArrowRight, Download, Share2, Video, Store, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import confetti from 'canvas-confetti';
 
 export default function OrderSuccessPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <OrderSuccessContent />
+        </Suspense>
+    );
+}
+
+function OrderSuccessContent() {
     const searchParams = useSearchParams();
     const isOfficial = searchParams.get('official') === 'true';
 
@@ -152,26 +161,57 @@ export default function OrderSuccessPage() {
                         </div>
                     </motion.div>
 
-                    {/* Live Tracking Banner */}
+                    {/* Live Tracking & ETA Simulator (Issue #15) */}
                     <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.7 }}
-                        className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-[3rem] p-8 md:p-12 text-white relative overflow-hidden"
+                        className="bg-slate-900 rounded-[3rem] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl"
                     >
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
-                        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                            <div className="space-y-4 text-center md:text-left">
-                                <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full">
-                                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Live Tracking</span>
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl" />
+
+                        <div className="relative z-10 space-y-8">
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                                <div className="space-y-4 text-center md:text-left">
+                                    <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-400 px-4 py-2 rounded-full border border-emerald-500/20">
+                                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest">Active Tracking</span>
+                                    </div>
+                                    <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic">Driver <span className="text-rose-600">En Route</span></h3>
+                                    <p className="text-white/60 text-sm font-bold uppercase tracking-wide">Cold-Chain Monitor: -2°C (STABLE)</p>
                                 </div>
-                                <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter italic">Watch Your Meat Come Home</h3>
-                                <p className="text-white/60 text-sm font-bold uppercase tracking-wide">SMS + WhatsApp alerts enabled</p>
+                                <div className="text-center md:text-right">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Estimated Arrival</p>
+                                    <p className="text-4xl font-black text-white italic tracking-tighter">12:45 <span className="text-sm not-italic text-rose-500">PM</span></p>
+                                </div>
                             </div>
-                            <button className="h-16 px-10 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-rose-600 hover:text-white transition-all shadow-2xl flex items-center gap-3">
-                                Track Now <ArrowRight className="w-5 h-5" />
-                            </button>
+
+                            {/* Tracking Progress Bar */}
+                            <div className="relative pt-12">
+                                <div className="absolute top-1/2 left-0 w-full h-1 bg-white/10 -translate-y-1/2 rounded-full" />
+                                <motion.div
+                                    initial={{ width: '0%' }}
+                                    animate={{ width: '65%' }}
+                                    transition={{ duration: 3, delay: 1 }}
+                                    className="absolute top-1/2 left-0 h-1 bg-rose-600 -translate-y-1/2 rounded-full shadow-[0_0_15px_rgba(225,29,72,0.5)]"
+                                />
+
+                                <div className="relative flex justify-between">
+                                    {[
+                                        { icon: Store, label: 'Shop', active: true },
+                                        { icon: Package, label: 'Picked', active: true },
+                                        { icon: Truck, label: 'Transit', active: true },
+                                        { icon: MapPin, label: 'Final', active: false }
+                                    ].map((step, idx) => (
+                                        <div key={idx} className="flex flex-col items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${step.active ? 'bg-rose-600' : 'bg-slate-800 text-slate-600'}`}>
+                                                <step.icon className="w-5 h-5" />
+                                            </div>
+                                            <span className={`text-[8px] font-black uppercase tracking-widest ${step.active ? 'text-white' : 'text-slate-600'}`}>{step.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </motion.div>
 
@@ -257,7 +297,7 @@ export default function OrderSuccessPage() {
                         <Link href="/butchers" className="flex-1 h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-rose-600 transition-all shadow-xl flex items-center justify-center gap-3">
                             Order More <ArrowRight className="w-5 h-5" />
                         </Link>
-                        <Link href="/dashboard/subscriptions" className="flex-1 h-16 bg-slate-100 text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all flex items-center justify-center gap-3">
+                        <Link href="/orders" className="flex-1 h-16 bg-slate-100 text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all flex items-center justify-center gap-3">
                             My Orders
                         </Link>
                     </motion.div>

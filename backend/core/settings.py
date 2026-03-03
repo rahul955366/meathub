@@ -55,9 +55,16 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_ratelimit',
     'api',
+    'django_crontab',
+]
+
+CRONJOBS = [
+    ('0 6 * * *', 'django.core.management.call_command', ['process_subscriptions'])
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 500,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
@@ -69,7 +76,7 @@ REST_FRAMEWORK = {
         'anon': '1000/day',
         'user': '5000/day',
         'login': '30/minute', 
-        'register': '10/hour',
+        'register': '100/day',
     },
     'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler'
 }
@@ -137,7 +144,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 

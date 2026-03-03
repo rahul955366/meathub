@@ -13,36 +13,38 @@ export default function GymPage() {
     const [items, setItems] = useState<MeatItem[]>([]);
     const [activeSubscriptionType, setActiveSubscriptionType] = useState<'GYM' | null>(null);
     const [selectedPlan, setSelectedPlan] = useState('Maintenance');
+    const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
 
     React.useEffect(() => {
         getMeatItems().then(setItems);
     }, []);
 
-    const handleStartProtocol = (planName: string) => {
+    const handleStartProtocol = (planName: string, itemId?: number) => {
         setSelectedPlan(planName);
+        if (itemId) setSelectedItemId(itemId);
         setActiveSubscriptionType('GYM');
     };
 
     // Curated high-quality fitness/meat images
     // Curated high-quality fitness/meat images - Expanded for variety
     const GYM_IMAGES = [
-        'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80', // Steak
-        'https://images.unsplash.com/photo-1588168333986-5078d3ae3976?auto=format&fit=crop&w=800&q=80', // Chicken Breast
-        'https://images.unsplash.com/photo-1615937657715-bc7b4b7962c1?auto=format&fit=crop&w=800&q=80', // Lean Beef
-        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80', // Salad with Meat
-        'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=800&q=80', // Healthy Bowl
-        'https://images.unsplash.com/photo-1432139555190-58524dae6a55?auto=format&fit=crop&w=800&q=80', // Steak Plate
-        'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=800&q=80', // Raw Meat
+        'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=800&q=80', // Tandoori Chicken
+        'https://images.unsplash.com/photo-1626132646529-5006375bc9af?auto=format&fit=crop&w=800&q=80', // Chicken Tikka
+        'https://images.unsplash.com/photo-1623961988350-66b064faf29d?auto=format&fit=crop&w=800&q=80', // Seekh Kabab
+        'https://images.unsplash.com/photo-1588168333986-5078d3ae3976?auto=format&fit=crop&w=800&q=80', // Fresh Chicken Breast
+        'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80', // Raw Cuts
+        'https://images.unsplash.com/photo-1628102431502-990710609653?auto=format&fit=crop&w=800&q=80', // Mutton Chops
+        'https://images.unsplash.com/photo-1590244634358-00fc497818e6?auto=format&fit=crop&w=800&q=80', // Prawns (Protein)
         'https://images.unsplash.com/photo-1551024601-56455b245a61?auto=format&fit=crop&w=800&q=80', // Grilled Chicken
-        'https://images.unsplash.com/photo-1585238342024-78d387f4a707?auto=format&fit=crop&w=800&q=80', // Turkey Breast
-        'https://images.unsplash.com/photo-1533777857419-3746f8ec1021?auto=format&fit=crop&w=800&q=80'  // Salmon Fillet (Prot)
+        'https://images.unsplash.com/photo-1626508035297-0cd27c425039?auto=format&fit=crop&w=800&q=80', // Tandoori Platter
+        'https://images.unsplash.com/photo-1521503332462-8511790bf7e5?auto=format&fit=crop&w=800&q=80'  // Fresh Fish (Omega)
     ];
 
     // Filter for protein-heavy items and ensure UNIQUE product names across multiple butchers
     const nameMap = new Map<string, MeatItem>();
     items.forEach(item => {
         const categoryMatch = item.category?.toUpperCase() === 'GYM' || item.category?.toUpperCase() === 'CHICKEN';
-        const nameMatch = ['breast', 'lean', 'steak', 'thigh', 'salad', 'salmon'].some(keyword =>
+        const nameMatch = ['breast', 'lean', 'tandoori', 'tikka', 'kabab', 'thigh', 'salmon'].some(keyword =>
             item.name.toLowerCase().includes(keyword)
         );
 
@@ -61,7 +63,6 @@ export default function GymPage() {
     });
 
     const proteinProducts = Array.from(nameMap.values())
-        .slice(0, 15) // Limit to top 15 variety cuts
         .map((item, index) => {
             // Enhanced deterministic visual assignment using modulo on ID and index
             const imageIndex = (Number(item.id) + index) % GYM_IMAGES.length;
@@ -157,14 +158,66 @@ export default function GymPage() {
                     <SubscriptionForm
                         type={activeSubscriptionType}
                         planId={selectedPlan}
-                        onClose={() => setActiveSubscriptionType(null)}
+                        initialItemId={selectedItemId || undefined}
+                        onClose={() => {
+                            setActiveSubscriptionType(null);
+                            setSelectedItemId(null);
+                        }}
                     />
                 )}
 
                 <NutritionAssistant context="GYM" />
 
+                {/* ── Macro Tracking Display (Phase 18) — Per-item cards ── */}
+                {proteinProducts.some((i: MeatItem) => i.protein_g || i.fat_g || i.calories) && (
+                    <div className="container mx-auto px-4 mt-20 mb-10">
+                        <div className="bg-slate-900 rounded-3xl p-8 border border-white/5">
+                            <h2 className="text-2xl font-black text-white tracking-tighter uppercase italic mb-2">
+                                Macro Breakdown
+                            </h2>
+                            <p className="text-white/30 text-xs mb-8">Per 100g · Gym-approved cuts only</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {proteinProducts
+                                    .filter((i: MeatItem) => i.protein_g || i.fat_g || i.calories)
+                                    .slice(0, 9)
+                                    .map((item: MeatItem) => {
+                                        const protein = parseFloat(String(item.protein_g)) || 0;
+                                        const fat = parseFloat(String(item.fat_g)) || 0;
+                                        const cal = parseInt(String(item.calories)) || 0;
+                                        return (
+                                            <div key={item.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 hover:border-rose-500/30 transition-all">
+                                                <p className="text-white font-bold text-sm mb-3 truncate">{item.name}</p>
+                                                <div className="space-y-2">
+                                                    {[
+                                                        { label: 'Protein', value: protein, max: 35, color: '#3b82f6' },
+                                                        { label: 'Fat', value: fat, max: 20, color: '#f59e0b' },
+                                                        { label: 'Calories', value: cal, max: 300, color: '#e11d48' },
+                                                    ].map(({ label, value, max, color }) => (
+                                                        <div key={label}>
+                                                            <div className="flex justify-between items-center mb-1">
+                                                                <span className="text-white/40 text-[10px] font-bold uppercase tracking-wider">{label}</span>
+                                                                <span className="text-white/70 text-[10px] font-black">{value}{label === 'Calories' ? 'kcal' : 'g'}</span>
+                                                            </div>
+                                                            <div className="h-1 rounded-full bg-white/5 overflow-hidden">
+                                                                <div
+                                                                    className="h-full rounded-full transition-all duration-700"
+                                                                    style={{ width: `${Math.min(100, (value / max) * 100)}%`, background: color }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                            <p className="text-white/20 text-xs mt-6 italic">* Data sourced from backend-seeded gym-approved items.</p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Products Grid */}
-                <div className="container mx-auto px-4 mt-24">
+                <div className="container mx-auto px-4 mt-10">
                     <div className="flex items-center justify-between mb-16">
                         <div>
                             <h2 className="text-4xl font-black tracking-tighter text-slate-900 uppercase italic">Power Cuts</h2>
@@ -175,7 +228,7 @@ export default function GymPage() {
                     <div className="grid grid-cols-2 lg:grid-cols-5 gap-6">
                         {proteinProducts.length > 0 ? (
                             proteinProducts.map((item: MeatItem) => (
-                                <ProductCard key={item.id} item={item} />
+                                <ProductCard key={item.id} item={item} buttonLabel="SUBSCRIBE" onAction={() => handleStartProtocol('Maintenance', item.id)} />
                             ))
                         ) : (
                             <div className="col-span-full py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">

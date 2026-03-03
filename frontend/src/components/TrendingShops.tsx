@@ -12,9 +12,9 @@ interface TrendingShopsProps {
 
 const FALLBACK_BUTCHER_IMG = 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80';
 
-export default function TrendingShops({ butchers }: TrendingShopsProps) {
-    // Take top 3 butchers
-    const trendingButchers = butchers.slice(0, 3);
+export default function TrendingShops({ butchers = [] }: TrendingShopsProps) {
+    // Take top 6 butchers
+    const trendingButchers = Array.isArray(butchers) ? butchers.slice(0, 6) : [];
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -36,10 +36,23 @@ export default function TrendingShops({ butchers }: TrendingShopsProps) {
                                     alt={butcher.shop_name}
                                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                 />
-                                <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-lg px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl">
-                                    <TrendingUp className="w-3 h-3 text-rose-500" />
-                                    <span className="text-[10px] font-black uppercase text-slate-900 tracking-wider">Trending</span>
-                                </div>
+
+                                {butcher.is_official ? (
+                                    <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
+                                        <div className="bg-rose-600 text-white px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl animate-pulse">
+                                            <TrendingUp className="w-3 h-3" />
+                                            <span className="text-[10px] font-black uppercase tracking-wider">Official Flagship</span>
+                                        </div>
+                                        <div className="bg-white/95 backdrop-blur-lg w-10 h-10 rounded-full flex items-center justify-center shadow-xl border border-rose-100">
+                                            <span className="text-lg">📹</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-lg px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl">
+                                        <TrendingUp className="w-3 h-3 text-rose-500" />
+                                        <span className="text-[10px] font-black uppercase text-slate-900 tracking-wider">Trending</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Content Section */}
@@ -48,13 +61,26 @@ export default function TrendingShops({ butchers }: TrendingShopsProps) {
                                     <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight group-hover:text-rose-600 transition-colors line-clamp-1">
                                         {butcher.shop_name}
                                     </h3>
+
+                                    {butcher.is_official && (
+                                        <div className="flex flex-wrap gap-2 py-1">
+                                            {['Video Verified', 'Artisanal Selection', 'Priority Logistics'].map(usp => (
+                                                <span key={usp} className="text-[8px] font-black uppercase tracking-tighter bg-rose-50 text-rose-600 px-2 py-0.5 rounded-md border border-rose-100">
+                                                    {usp}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center gap-3">
                                         <div className="flex items-center gap-1 bg-emerald-500 text-white px-2 py-1 rounded-md shadow-md">
                                             <Star className="w-3 h-3 fill-white" />
-                                            <span className="font-black text-xs">4.{8 - index}</span>
+                                            <span className="font-black text-xs">
+                                                {(butcher as any).average_rating ? (butcher as any).average_rating.toFixed(1) : `4.${8 - index}`}
+                                            </span>
                                         </div>
                                         <span className="text-slate-400 font-bold text-xs uppercase tracking-wide">
-                                            {(Number(butcher.id) * 123) % 500 + 50} Orders
+                                            {(butcher as any).active_orders || (Number(butcher.id) * 123) % 500 + 50} Orders
                                         </span>
                                     </div>
                                 </div>

@@ -2,11 +2,14 @@
 
 import React, { useState, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { MapPin, Star, Clock, ArrowRight, Navigation, Award, TrendingUp, Zap, ShieldCheck, Search } from 'lucide-react';
+import { MapPin, Star, Clock, ArrowRight, Navigation, Award, TrendingUp, Zap, ShieldCheck, Search, Map, Shell, Tv } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { Butcher, MeatItem } from '@/types';
 import toast from 'react-hot-toast';
+
+const ButcherMap = dynamic(() => import('@/components/ButcherMap'), { ssr: false, loading: () => <div className="w-full h-[400px] rounded-2xl bg-white/5 flex items-center justify-center text-white/30 text-sm">Loading map…</div> });
 
 interface ButcherListProps {
     initialButchers: Butcher[];
@@ -19,6 +22,10 @@ interface EnrichedButcher extends Butcher {
     rating: string;
     deliveryTime: number;
     offer: string | null;
+    is_busy?: boolean;
+    active_orders?: number;
+    hygiene_score?: number;
+    average_rating?: number;
 }
 
 const FALLBACK_BUTCHER_IMG = 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=80';
@@ -31,6 +38,8 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
     const query = searchParams.get('q');
     const [userLocation, setUserLocation] = useState<{ lat: number, lng: number } | null>(null);
     const [isLocating, setIsLocating] = useState(false);
+    const [showMap, setShowMap] = useState(false);
+    const [selectedButcherId, setSelectedButcherId] = useState<number | null>(null);
 
     const getDistance = (bLat: number = 17.4944, bLng: number = 78.3908) => {
         if (!userLocation) return 0;
@@ -47,19 +56,31 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
     const handleLocate = () => {
         setIsLocating(true);
         if ('geolocation' in navigator) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                    setIsLocating(false);
-                    toast.success("Location detected! Showing nearest shops.");
-                },
-                (err) => {
+            const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 };
+
+            const success = (pos: GeolocationPosition) => {
+                setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                setIsLocating(false);
+                toast.success("Location detected! Showing nearest shops.");
+            };
+
+            const error = (err: GeolocationPositionError) => {
+                if (err.code === 3 && options.enableHighAccuracy) {
+                    // If high accuracy times out, try one more time without it
+                    console.log("High accuracy timeout, trying low accuracy...");
+                    navigator.geolocation.getCurrentPosition(success, (secondErr) => {
+                        console.error("Geolocation error (low accuracy):", secondErr);
+                        setIsLocating(false);
+                        toast.error("Could not detect precise location. Using default view.");
+                    }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+                } else {
                     console.error("Geolocation error:", err);
                     setIsLocating(false);
                     toast.error("Could not detect location. Using default view.");
-                },
-                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-            );
+                }
+            };
+
+            navigator.geolocation.getCurrentPosition(success, error, options);
         } else {
             setIsLocating(false);
             toast.error("Geolocation not supported by your browser.");
@@ -110,9 +131,12 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
                 ...butcher,
                 itemCount: butcherItems.length,
                 distance: distance,
-                rating: butcher.is_official ? "4.8" : (4.2 + (Number(butcher.id) % 5) * 0.1).toFixed(1),
+                rating: butcher.average_rating ? butcher.average_rating.toFixed(1) : (butcher.is_official ? "4.8" : (4.2 + (Number(butcher.id) % 5) * 0.1).toFixed(1)),
                 deliveryTime: butcher.is_official ? 20 : 25 + (Number(butcher.id) % 20),
-                offer: butcher.is_official ? "EXTCLUSIVE" : ((Number(butcher.id) % 3 === 0) ? `${10 + (Number(butcher.id) % 20)}% OFF` : null)
+                offer: butcher.is_official ? "EXTCLUSIVE" : ((Number(butcher.id) % 3 === 0) ? `${10 + (Number(butcher.id) % 20)}% OFF` : null),
+                is_busy: butcher.is_busy,
+                active_orders: butcher.active_orders,
+                 hygiene_score: butcher.hygiene_score
             };
         });
 
@@ -184,21 +208,43 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
             {/* Shop Cards Grid - Premium with Animations */}
             <div className="container mx-auto px-4 py-16">
 
-                {/* Categories Pill Bar */}
-                <div className="flex flex-wrap justify-center gap-3 mb-12">
-                    {['ALL', 'CHICKEN', 'MUTTON', 'FISH', 'PET', 'GYM'].map((cat) => (
-                        <button
-                            key={cat}
-                            onClick={() => updateSearch(cat === 'ALL' ? '' : cat)}
-                            className={`h-12 px-8 rounded-2xl font-black text-[10px] tracking-[0.2em] transition-all uppercase ${(query === cat || (cat === 'ALL' && !query))
-                                ? 'bg-rose-600 text-white shadow-xl shadow-rose-200'
-                                : 'bg-white text-slate-400 border border-slate-100 hover:border-rose-200 hover:text-rose-600'
-                                }`}
-                        >
-                            {cat}
-                        </button>
-                    ))}
+                {/* Controls row: Categories + Map Toggle */}
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+                    <div className="flex flex-wrap justify-center gap-3">
+                        {['ALL', 'CHICKEN', 'MUTTON', 'FISH', 'PET', 'GYM'].map((cat) => (
+                            <button
+                                key={cat}
+                                onClick={() => updateSearch(cat === 'ALL' ? '' : cat)}
+                                className={`h-12 px-8 rounded-2xl font-black text-[10px] tracking-[0.2em] transition-all uppercase ${(query === cat || (cat === 'ALL' && !query))
+                                    ? 'bg-rose-600 text-white shadow-xl shadow-rose-200'
+                                    : 'bg-white text-slate-400 border border-slate-100 hover:border-rose-200 hover:text-rose-600'
+                                    }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Map toggle button */}
+                    <button
+                        onClick={() => setShowMap(v => !v)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${showMap ? 'bg-rose-600 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:border-rose-300 hover:text-rose-600'
+                            }`}
+                    >
+                        <Map size={14} />{showMap ? 'Hide Map' : 'Show Map'}
+                    </button>
                 </div>
+
+                {/* Map Panel (Phase 17) */}
+                {showMap && (
+                    <div className="mb-10">
+                        <ButcherMap
+                            butchers={filteredAndSortedButchers}
+                            selectedId={selectedButcherId}
+                            onSelect={setSelectedButcherId}
+                        />
+                    </div>
+                )}
 
                 {/* Search & Filter Bar */}
                 <div className="mb-12">
@@ -279,9 +325,15 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
 
                                             {/* Official Badge */}
                                             {butcher.is_official && (
-                                                <div className="absolute top-4 right-4 bg-slate-900 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-2xl border border-white/20">
-                                                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest">MeatHub Official</span>
+                                                <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+                                                    <div className="bg-slate-900 text-white px-4 py-2 rounded-full flex items-center gap-2 shadow-2xl border border-white/20">
+                                                        <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                                                        <span className="text-[10px] font-black uppercase tracking-widest">MeatHub Official</span>
+                                                    </div>
+                                                    <div className="bg-rose-600 text-white px-3 py-1.5 rounded-full flex items-center gap-2 shadow-xl animate-pulse">
+                                                        <Tv className="w-3 h-3" />
+                                                        <span className="text-[8px] font-black uppercase tracking-widest">Live Stream</span>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -299,8 +351,23 @@ export default function ButcherList({ initialButchers, initialItems }: ButcherLi
                                                         <Star className="w-4 h-4 fill-white" />
                                                         <span className="font-black text-sm">{butcher.rating}</span>
                                                     </div>
+                                                    
+                                                    {/* B5: Busy Status Badge */}
+                                                    {butcher.is_busy && (
+                                                        <div className="flex items-center gap-1.5 bg-amber-500 text-white px-3 py-1.5 rounded-lg animate-pulse shadow-lg">
+                                                            <Clock className="w-4 h-4" />
+                                                            <span className="font-black text-[10px] uppercase">Busy</span>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <Shell key={i} size={10} className={i < (butcher.hygiene_score || 5) ? 'fill-blue-600' : 'text-blue-200'} />
+                                                        ))}
+                                                        <span className="text-[8px] font-black uppercase ml-1">Hygiene</span>
+                                                    </div>
                                                     <span className="text-slate-500 font-bold text-sm">
-                                                        ({100 + (Number(butcher.id) * 7) % 500}+ orders)
+                                                        ({100 + (butcher.active_orders || (Number(butcher.id) * 7) % 500)}+ orders)
                                                     </span>
                                                 </div>
                                             </div>

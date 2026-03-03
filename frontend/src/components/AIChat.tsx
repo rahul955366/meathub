@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Sparkles, Send, Loader2, X } from 'lucide-react';
+import { useAppContext } from '@/context/AppContext';
 
 interface AIChatProps {
     context: 'PET' | 'GYM' | 'GENERAL';
@@ -9,13 +10,33 @@ interface AIChatProps {
 }
 
 export default function AIChat({ context, title }: AIChatProps) {
+    const { token } = useAppContext();
     const [isOpen, setIsOpen] = useState(false);
     const [message, setMessage] = useState('');
     const [history, setHistory] = useState<{ role: 'user' | 'ai', text: string }[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
+    const openChat = () => {
+        setIsOpen(true);
+        if (history.length === 0) {
+            const greeting = context === 'PET'
+                ? "Welcome to the Pet Nutrition Guild. I'm here to help you design a species-appropriate ancestral diet for your companion. What are we calculating today?"
+                : context === 'GYM'
+                    ? "Strength and Honor. I am your Protein Protocol Assistant. Let's optimize your intake for maximum recovery. What is your current training goal?"
+                    : "Greetings, Chef. I am your Artisanal Guide to the Village Guild. How can I assist with your sourcing today?";
+
+            setTimeout(() => {
+                setHistory([{ role: 'ai', text: greeting }]);
+            }, 500);
+        }
+    };
+
     const handleSend = async () => {
         if (!message.trim()) return;
+        if (!token) {
+            setHistory(prev => [...prev, { role: 'ai', text: "Please sign in to the MeatHub Guild to access the Artisanal Assistant." }]);
+            return;
+        }
 
         const userMessage = message;
         setMessage('');
@@ -27,7 +48,7 @@ export default function AIChat({ context, title }: AIChatProps) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // Note: In real app, we would add Auth token here
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ context, message: userMessage }),
             });
@@ -45,8 +66,8 @@ export default function AIChat({ context, title }: AIChatProps) {
         <>
             {/* Trigger Button */}
             <button
-                onClick={() => setIsOpen(true)}
-                className="fixed bottom-8 right-8 z-50 w-16 h-16 bg-slate-900 text-white rounded-2xl shadow-2xl flex items-center justify-center hover:bg-rose-600 transition-all hover:scale-110 active:scale-95 group"
+                onClick={openChat}
+                className="fixed bottom-8 right-8 z-50 h-20 px-8 bg-slate-900 text-white rounded-[2.5rem] shadow-2xl flex items-center gap-4 hover:bg-rose-600 transition-all hover:scale-105 active:scale-95 border border-white/10 group"
             >
                 <Sparkles className="w-8 h-8 group-hover:rotate-12 transition-transform" />
             </button>
@@ -98,8 +119,8 @@ export default function AIChat({ context, title }: AIChatProps) {
                         {history.map((msg, i) => (
                             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[80%] p-5 rounded-[2rem] text-sm font-medium shadow-sm ${msg.role === 'user'
-                                        ? 'bg-rose-600 text-white rounded-tr-none'
-                                        : 'bg-slate-50 text-slate-900 border border-slate-100 rounded-tl-none italic'
+                                    ? 'bg-rose-600 text-white rounded-tr-none'
+                                    : 'bg-slate-50 text-slate-900 border border-slate-100 rounded-tl-none italic'
                                     }`}>
                                     {msg.text}
                                 </div>

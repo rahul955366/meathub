@@ -238,7 +238,10 @@ export default function SubscriptionsPage() {
                             The Pure <br /> Lifestyle.
                         </h2>
                         <div className="flex justify-center relative z-10">
-                            <button className="h-20 px-12 bg-slate-950 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] flex items-center gap-4 hover:scale-105 transition-all shadow-2xl">
+                            <button
+                                onClick={() => setActiveSubscriptionType('GENERAL')}
+                                className="h-20 px-12 bg-slate-950 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] flex items-center gap-4 hover:scale-105 transition-all shadow-2xl"
+                            >
                                 BEGIN YOUR CYCLE <ArrowRight className="w-6 h-6 text-rose-600" />
                             </button>
                         </div>
