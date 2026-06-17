@@ -122,19 +122,17 @@ export async function request<T>(endpoint: string, options: RequestInit = {}): P
 
 // ── Public Data Fetching ─────────────────────────────────────
 
-export async function getButchers(): Promise<Butcher[]> {
-    const data = await request<Butcher[]>('/butchers/');
-    return data || [];
+export async function getButchers(): Promise<Butcher[] | null> {
+    return request<Butcher[]>('/butchers/');
 }
 
-export async function getMeatItems(): Promise<MeatItem[]> {
-    const data = await request<MeatItem[]>('/items/');
-    return data || [];
+export async function getMeatItems(): Promise<MeatItem[] | null> {
+    return request<MeatItem[]>('/items/');
 }
 
-export async function getVillageSources(): Promise<VillageSource[]> {
+export async function getVillageSources(): Promise<VillageSource[] | null> {
     const data = await request<VillageSource[]>('/village-sources/');
-    return data || [];
+    return data;
 }
 
 export async function getButcher(id: string): Promise<Butcher | null> {
@@ -249,6 +247,8 @@ export async function createOrder(token: string | null, payload: {
     butcher_id: number;
     delivery_address: string;
     delivery_phone: string;
+    user_lat?: number;
+    user_lng?: number;
     payment_method: string;
     payment_id?: string;
     sunday_special?: boolean;
@@ -443,4 +443,12 @@ export async function getOrderHistory(token: string, orderId: number): Promise<a
         headers: { Authorization: `Bearer ${token}` }
     });
     return data || [];
+}
+export async function redeemLoyaltyPoints(token: string, amount: number): Promise<boolean> {
+    const data = await request('/auth/redeem-points/', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ amount }),
+    });
+    return data !== null;
 }

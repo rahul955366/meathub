@@ -19,9 +19,20 @@ export default function OrderSuccessPage() {
 function OrderSuccessContent() {
     const searchParams = useSearchParams();
     const isOfficial = searchParams.get('official') === 'true';
+    const orderId = searchParams.get('orderId');
 
-    // Generate a memoized order number once
-    const orderNumber = useMemo(() => `MH${Date.now().toString().slice(-8)}`, []);
+    // Use authentic order ID if available, else generated for demo
+    const orderNumber = orderId || useMemo(() => `MH${Date.now().toString().slice(-8)}`, []);
+
+    const arrivalTime = useMemo(() => {
+        const d = new Date(Date.now() + 45 * 60000);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).replace(' AM', '').replace(' PM', '');
+    }, []);
+
+    const arrivalPeriod = useMemo(() => {
+        const d = new Date(Date.now() + 45 * 60000);
+        return d.getHours() >= 12 ? 'PM' : 'AM';
+    }, []);
 
     useEffect(() => {
         // Celebration confetti effect
@@ -182,7 +193,7 @@ function OrderSuccessContent() {
                                 </div>
                                 <div className="text-center md:text-right">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">Estimated Arrival</p>
-                                    <p className="text-4xl font-black text-white italic tracking-tighter">12:45 <span className="text-sm not-italic text-rose-500">PM</span></p>
+                                    <p className="text-4xl font-black text-white italic tracking-tighter">{arrivalTime} <span className="text-sm not-italic text-rose-500">{arrivalPeriod}</span></p>
                                 </div>
                             </div>
 

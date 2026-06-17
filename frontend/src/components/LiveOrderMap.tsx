@@ -8,6 +8,8 @@ interface Order {
     delivery_address?: string;
     butcher_lat?: number;
     butcher_lng?: number;
+    user_lat?: number;
+    user_lng?: number;
 }
 
 interface LiveOrderMapProps {
@@ -72,7 +74,10 @@ export default function LiveOrderMap({ order }: LiveOrderMapProps) {
                 lat: Number(order.butcher_lat) || DEFAULT_BUTCHER.lat,
                 lng: Number(order.butcher_lng) || DEFAULT_BUTCHER.lng,
             };
-            const dest = DEFAULT_DEST; // Real app would geocode delivery_address
+            const dest = {
+                lat: Number(order.user_lat) || DEFAULT_DEST.lat,
+                lng: Number(order.user_lng) || DEFAULT_DEST.lng,
+            };
 
             const progress = STATUS_PROGRESS[order.status] ?? 0;
             const deliveryPos = interpolate(origin, dest, progress);

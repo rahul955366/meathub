@@ -18,11 +18,7 @@ export async function POST(
 
         // Special mapping for our reset-stock action
         if (pathStr === 'butcher-reset-stock') {
-            // In a real app, we'd need to know WHICH butcher. 
-            // But for this proxy, let's assume the backend 'me' logic or token is used.
-            // Actually, the reset_stock action is detail=True, so it needs an ID.
-            // Let's make it a general action or use a specific mapping.
-            // For now, let's map it to a placeholder or wait.
+            targetUrl = `${API_URL}/api/butchers/reset_stock/`;
         }
 
         const res = await fetch(targetUrl, {

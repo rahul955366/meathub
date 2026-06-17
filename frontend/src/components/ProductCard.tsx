@@ -1,6 +1,6 @@
 "use client";
 
-import { ShoppingBag, Check, MapPin, ArrowRight, Minus, Plus, Scissors, Info, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, Check, MapPin, ArrowRight, Minus, Plus, ShieldCheck, Clock } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -17,94 +17,126 @@ interface ProductCardProps {
 // ── ACCURATE FALLBACK IMAGES ─────────────────────────────────
 // Used when backend image_url fails. Maps product name keywords
 // to the exact product type image — zero mismatches.
+// Order matters — most specific keywords first.
 const PRODUCT_IMAGE_MAP: { key: string; url: string }[] = [
-    // Chicken
+
+    // ── CHICKEN (specific first) ──────────────────────────────
     { key: 'COUNTRY CHICKEN', url: 'https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=600&q=80&fit=crop' },
     { key: 'NATU KODI', url: 'https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=600&q=80&fit=crop' },
-    { key: 'CHICKEN BREAST', url: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&q=80&fit=crop' },
-    { key: 'CHICKEN THIGH', url: 'https://images.unsplash.com/photo-1598103442097-8b74394b99c6?w=600&q=80&fit=crop' },
-    { key: 'DRUMSTICK', url: 'https://images.unsplash.com/photo-1603048588661-83ae09942a33?w=600&q=80&fit=crop' },
+    { key: 'TANDOORI', url: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=600&q=80&fit=crop' },
+    { key: 'CHICKEN BREAST', url: 'https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=600&q=80&fit=crop' },
+    { key: 'CHICKEN THIGH', url: 'https://images.unsplash.com/photo-1602491673980-928929e46a75?w=600&q=80&fit=crop' },
     { key: 'CHICKEN WING', url: 'https://images.unsplash.com/photo-1527477396000-e27163b4bff0?w=600&q=80&fit=crop' },
-    { key: 'CHICKEN LIVER', url: 'https://images.unsplash.com/photo-1607116665636-2506534bf0fe?w=600&q=80&fit=crop' },
+    { key: 'DRUMSTICK', url: 'https://images.unsplash.com/photo-1594950195709-a14f66c242d7?w=600&q=80&fit=crop' },
     { key: 'CHICKEN KEEMA', url: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&q=80&fit=crop' },
     { key: 'CHICKEN MINCE', url: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&q=80&fit=crop' },
-    { key: 'SEEKH KABAB', url: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&q=80&fit=crop' },
-    { key: 'TIKKA', url: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=600&q=80&fit=crop' },
-    { key: 'TANDOORI', url: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=600&q=80&fit=crop' },
-    { key: 'MARINATED', url: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=600&q=80&fit=crop' },
-    { key: 'BONELESS CHICKEN', url: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80&fit=crop' },
+    { key: 'CHICKEN STRIP', url: 'https://images.unsplash.com/photo-1562967914-608f82629710?w=600&q=80&fit=crop' },
+    { key: 'CHICKEN LIVER', url: 'https://images.unsplash.com/photo-1607116665636-2506534bf0fe?w=600&q=80&fit=crop' },
+    { key: 'CHICKEN BONELESS', url: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80&fit=crop' },
     { key: 'CHICKEN CURRY', url: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&q=80&fit=crop' },
-    { key: 'WHOLE CHICKEN', url: 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=600&q=80&fit=crop' },
-    // Mutton
-    { key: 'PAYA', url: 'https://images.unsplash.com/photo-1601050690438-47c764de4f7c?w=600&q=80&fit=crop' },
-    { key: 'TROTTER', url: 'https://images.unsplash.com/photo-1601050690438-47c764de4f7c?w=600&q=80&fit=crop' },
-    { key: 'BHEJA', url: 'https://images.unsplash.com/photo-1607532941433-304659e8198a?w=600&q=80&fit=crop' },
-    { key: 'BRAIN', url: 'https://images.unsplash.com/photo-1607532941433-304659e8198a?w=600&q=80&fit=crop' },
-    { key: 'MUTTON CHOP', url: 'https://images.unsplash.com/photo-1607532941433-304659e8198a?w=600&q=80&fit=crop' },
-    { key: 'MUTTON RIB', url: 'https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80&fit=crop' },
-    { key: 'MUTTON LEG', url: 'https://images.unsplash.com/photo-1551028150-64b9f398f678?w=600&q=80&fit=crop' },
+
+    // ── MUTTON (specific first) ───────────────────────────────
     { key: 'MUTTON LIVER', url: 'https://images.unsplash.com/photo-1624174503860-478de0ae2c09?w=600&q=80&fit=crop' },
     { key: 'MUTTON KEEMA', url: 'https://images.unsplash.com/photo-1603048588661-83ae09942a33?w=600&q=80&fit=crop' },
-    { key: 'BIRYANI', url: 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?w=600&q=80&fit=crop' },
-    { key: 'MUTTON CURRY', url: 'https://images.unsplash.com/photo-1602491675983-c42bcf9a1a31?w=600&q=80&fit=crop' },
-    { key: 'BONELESS MUTTON', url: 'https://images.unsplash.com/photo-1616659000060-7e7c3d4b7e19?w=600&q=80&fit=crop' },
-    { key: 'LEAN MUTTON', url: 'https://images.unsplash.com/photo-1616659000060-7e7c3d4b7e19?w=600&q=80&fit=crop' },
-    // Fish
-    { key: 'SEER FISH', url: 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=600&q=80&fit=crop' },
-    { key: 'VANJARAM', url: 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=600&q=80&fit=crop' },
+    { key: 'MUTTON BONELESS', url: 'https://images.unsplash.com/photo-1607532941433-304659e8198a?w=600&q=80&fit=crop' },
+    { key: 'MUTTON RIB', url: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80&fit=crop' },
+    { key: 'MUTTON CHOP', url: 'https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80&fit=crop' },
+    { key: 'MUTTON CURRY', url: 'https://images.unsplash.com/photo-1545247181-516773cae754?w=600&q=80&fit=crop' },
+    { key: 'BIRYANI CUT', url: 'https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?w=600&q=80&fit=crop' },
+    { key: 'MUTTON MINCE', url: 'https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=600&q=80&fit=crop' },
+    { key: 'LEAN MINCE', url: 'https://images.unsplash.com/photo-1628102491502-990710609653?w=600&q=80&fit=crop' },
+    { key: 'PAYA', url: 'https://images.unsplash.com/photo-1601050690438-47c764de4f7c?w=600&q=80&fit=crop' },
+    { key: 'BHEJA', url: 'https://images.unsplash.com/photo-1607532941433-304659e8198a?w=600&q=80&fit=crop' },
+    { key: 'LAMB LEG', url: 'https://images.unsplash.com/photo-1551028150-64b9f398f678?w=600&q=80&fit=crop' },
+    { key: 'LAMB CHOP', url: 'https://images.unsplash.com/photo-1668887465701-41fee9e1d474?w=600&q=80&fit=crop' },
+    { key: 'LAMB SHOULDER', url: 'https://images.unsplash.com/photo-1621984584483-ad126ef67bbd?w=600&q=80&fit=crop' },
+    { key: 'LAMB', url: 'https://images.unsplash.com/photo-1668887465701-41fee9e1d474?w=600&q=80&fit=crop' },
+    { key: 'PRIME MUTTON', url: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&q=80&fit=crop' },
+
+    // ── FISH (specific first) ─────────────────────────────────
+    { key: 'SEER FISH', url: 'https://images.unsplash.com/photo-1510130387422-82bed34b37e9?w=600&q=80&fit=crop' },
+    { key: 'VANJARAM', url: 'https://images.unsplash.com/photo-1510130387422-82bed34b37e9?w=600&q=80&fit=crop' },
     { key: 'POMFRET', url: 'https://images.unsplash.com/photo-1513267048331-5611cad62e41?w=600&q=80&fit=crop' },
-    { key: 'MACKEREL', url: 'https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?w=600&q=80&fit=crop' },
-    { key: 'BANGDA', url: 'https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?w=600&q=80&fit=crop' },
+    { key: 'SALMON', url: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=80&fit=crop' },
+    { key: 'ROHU', url: 'https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?w=600&q=80&fit=crop' },
+    { key: 'CATLA', url: 'https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?w=600&q=80&fit=crop' },
+    { key: 'MACKEREL', url: 'https://images.unsplash.com/photo-1611171711912-e3f5b208bb6b?w=600&q=80&fit=crop' },
+    { key: 'BANGDA', url: 'https://images.unsplash.com/photo-1611171711912-e3f5b208bb6b?w=600&q=80&fit=crop' },
     { key: 'TILAPIA', url: 'https://images.unsplash.com/photo-1524704659695-9f52f440ee2d?w=600&q=80&fit=crop' },
-    { key: 'BASA', url: 'https://images.unsplash.com/photo-1510130387422-82bed34b37e9?w=600&q=80&fit=crop' },
+    { key: 'BASA', url: 'https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=600&q=80&fit=crop' },
     { key: 'SARDINE', url: 'https://images.unsplash.com/photo-1611171838489-f44f7264ccfd?w=600&q=80&fit=crop' },
     { key: 'KING FISH', url: 'https://images.unsplash.com/photo-1535398082218-038289bc9514?w=600&q=80&fit=crop' },
     { key: 'FISH STEAK', url: 'https://images.unsplash.com/photo-1580476262798-bddd9f4b7369?w=600&q=80&fit=crop' },
     { key: 'FISH FILLET', url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=600&q=80&fit=crop' },
     { key: 'FISH CUBE', url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=600&q=80&fit=crop' },
     { key: 'FISH FINGER', url: 'https://images.unsplash.com/photo-1580476262798-bddd9f4b7369?w=600&q=80&fit=crop' },
-    { key: 'ROHU', url: 'https://images.unsplash.com/photo-1521503332462-8511790bf7e5?w=600&q=80&fit=crop' },
-    { key: 'CATLA', url: 'https://images.unsplash.com/photo-1521503332462-8511790bf7e5?w=600&q=80&fit=crop' },
-    // Seafood
+    { key: 'SEA FISH', url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=600&q=80&fit=crop' },
+    { key: 'COLD WATER', url: 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=600&q=80&fit=crop' },
+    { key: 'FISH MARKET', url: 'https://images.unsplash.com/photo-1534482421-64566f976cfa?w=600&q=80&fit=crop' },
+
+    // ── SEAFOOD (specific first) ──────────────────────────────
+    { key: 'TIGER PRAWN', url: 'https://images.unsplash.com/photo-1623855244183-52fd8d3ce2f7?w=600&q=80&fit=crop' },
+    { key: 'JUMBO PRAWN', url: 'https://images.unsplash.com/photo-1559737558-2f5a35f4523b?w=600&q=80&fit=crop' },
+    { key: 'JUMBO PRAWN', url: 'https://images.unsplash.com/photo-1559737558-2f5a35f4523b?w=600&q=80&fit=crop' },
+    { key: 'MEDIUM PRAWN', url: 'https://images.unsplash.com/photo-1590759223965-d41fd464b7af?w=600&q=80&fit=crop' },
+    { key: 'SMALL PRAWN', url: 'https://images.unsplash.com/photo-1563991655280-cb95c90ca2fb?w=600&q=80&fit=crop' },
     { key: 'LOBSTER', url: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=80&fit=crop' },
     { key: 'SQUID', url: 'https://images.unsplash.com/photo-1553744399-460b0f553051?w=600&q=80&fit=crop' },
     { key: 'CALAMARI', url: 'https://images.unsplash.com/photo-1553744399-460b0f553051?w=600&q=80&fit=crop' },
     { key: 'MUSSEL', url: 'https://images.unsplash.com/photo-1598214886806-c87b84b7078b?w=600&q=80&fit=crop' },
     { key: 'CRAB', url: 'https://images.unsplash.com/photo-1550950158-d0d960dff51b?w=600&q=80&fit=crop' },
-    { key: 'TIGER PRAWN', url: 'https://images.unsplash.com/photo-1623855244183-52fd8d3ce2f7?w=600&q=80&fit=crop' },
-    { key: 'JUMBO PRAWN', url: 'https://images.unsplash.com/photo-1559737558-2f5a35f4523b?w=600&q=80&fit=crop' },
-    { key: 'MEDIUM PRAWN', url: 'https://images.unsplash.com/photo-1590759223965-d41fd464b7af?w=600&q=80&fit=crop' },
-    { key: 'SMALL PRAWN', url: 'https://images.unsplash.com/photo-1563991655280-cb95c90ca2fb?w=600&q=80&fit=crop' },
     { key: 'PRAWN', url: 'https://images.unsplash.com/photo-1563991655280-cb95c90ca2fb?w=600&q=80&fit=crop' },
-    // Gym
-    { key: 'EGG WHITE', url: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=600&q=80&fit=crop' },
+
+    // ── GYM / FITNESS ─────────────────────────────────────────
     { key: 'TURKEY', url: 'https://images.unsplash.com/photo-1574672280600-4accfa5b6f98?w=600&q=80&fit=crop' },
+    { key: 'GRILLED', url: 'https://images.unsplash.com/photo-1626132646529-5006375bc9af?w=600&q=80&fit=crop' },
+    { key: 'HIGH PROTEIN', url: 'https://images.unsplash.com/photo-1628102491502-990710609653?w=600&q=80&fit=crop' },
+    { key: 'EGG WHITE', url: 'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=600&q=80&fit=crop' },
     { key: 'OMEGA', url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=600&q=80&fit=crop' },
-    // Pet
+
+    // ── PET FOOD ──────────────────────────────────────────────
     { key: 'CHICKEN FRAME', url: 'https://images.unsplash.com/photo-1610057099443-fde6c90db253?w=600&q=80&fit=crop' },
     { key: 'CHICKEN NECK', url: 'https://images.unsplash.com/photo-1610057099443-fde6c90db253?w=600&q=80&fit=crop' },
     { key: 'BONE BROTH', url: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=600&q=80&fit=crop' },
-    { key: 'ORGAN MIX', url: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=600&q=80&fit=crop' },
+    { key: 'ORGAN MIX', url: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600&q=80&fit=crop' },
+    { key: 'RAW BONE', url: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80&fit=crop' },
     { key: 'RAW FISH', url: 'https://images.unsplash.com/photo-1521503332462-8511790bf7e5?w=600&q=80&fit=crop' },
     { key: 'PET LIVER', url: 'https://images.unsplash.com/photo-1607116665636-2506534bf0fe?w=600&q=80&fit=crop' },
 ];
 
+// Category-level fallbacks — used only if no keyword matched
 const CATEGORY_FALLBACKS: Record<string, string> = {
     CHICKEN: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&q=80&fit=crop',
-    MUTTON: 'https://images.unsplash.com/photo-1602491675983-c42bcf9a1a31?w=600&q=80&fit=crop',
-    FISH: 'https://images.unsplash.com/photo-1521503332462-8511790bf7e5?w=600&q=80&fit=crop',
+    MUTTON: 'https://images.unsplash.com/photo-1545247181-516773cae754?w=600&q=80&fit=crop',
+    FISH: 'https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?w=600&q=80&fit=crop',
     PRAWNS: 'https://images.unsplash.com/photo-1623855244183-52fd8d3ce2f7?w=600&q=80&fit=crop',
     GYM: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600&q=80&fit=crop',
-    PET: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=600&q=80&fit=crop',
+    PET: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=600&q=80&fit=crop',
     DEFAULT: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=600&q=80&fit=crop',
 };
 
-// Looks up most specific keyword first, then category
-const getAccurateImage = (name: string, category: string) => {
+// Cut options per category — no "Biryani Cut" for fish, no "Fillet" for chicken
+const CUTS_BY_CATEGORY: Record<string, string[]> = {
+    CHICKEN: ['Curry Cut', 'Biryani Cut', 'Boneless', 'Tandoori Cut', 'Minced'],
+    MUTTON: ['Curry Cut', 'Biryani Cut', 'Boneless', 'Chops', 'Minced'],
+    FISH: ['Full Clean', 'Fillet', 'Steak Cut', 'Curry Cut'],
+    PRAWNS: ['Shell On', 'Cleaned', 'Deveined'],
+    GYM: ['Boneless', 'Minced', 'Strips'],
+    PET: ['Whole', 'Chopped', 'Ground'],
+    DEFAULT: ['Curry Cut', 'Boneless', 'Minced'],
+};
+
+// Looks up most specific keyword first, then falls back to category
+const getAccurateImage = (name: string, category: string): string => {
     const upper = name.toUpperCase();
     const match = PRODUCT_IMAGE_MAP.find(({ key }) => upper.includes(key));
     if (match) return match.url;
     return CATEGORY_FALLBACKS[category.toUpperCase()] || CATEGORY_FALLBACKS.DEFAULT;
+};
+
+// Format price as Indian number — ₹780 not ₹780.00
+const formatPrice = (price: string | number): string => {
+    return Number(price).toLocaleString('en-IN');
 };
 
 export default function ProductCard({
@@ -115,35 +147,32 @@ export default function ProductCard({
     onAction
 }: ProductCardProps) {
     const { addToCart } = useAppContext();
-    const [isAdded, setIsAdded] = useState(false);
-
-    // Use keyword-aware accurate image mapping
-    const keywordFallback = getAccurateImage(item.name, item.category);
-    const initialFallback = item.image_url && item.image_url.length > 10 ? item.image_url : keywordFallback;
-    const [imgSrc, setImgSrc] = useState(initialFallback);
-
     const router = useRouter();
 
-    const handleError = () => {
-        setImgSrc(initialFallback);
-    };
-
+    const [isAdded, setIsAdded] = useState(false);
     const [showSelector, setShowSelector] = useState(false);
     const [quantity, setQuantity] = useState(1);
-    const [selectedCut, setSelectedCut] = useState('Curry Cut');
+
+    // Pick cut options based on product category
+    const cuts = CUTS_BY_CATEGORY[item.category?.toUpperCase()] || CUTS_BY_CATEGORY.DEFAULT;
+    const [selectedCut, setSelectedCut] = useState(cuts[0]);
+
+    // Image resolution: backend URL → keyword fallback → category fallback
+    const keywordFallback = getAccurateImage(item.name, item.category);
+    const initialSrc = item.image_url && item.image_url.length > 10 ? item.image_url : keywordFallback;
+    const [imgSrc, setImgSrc] = useState(initialSrc);
+
+    // On error always fall back to keyword-safe image, never loop
+    const handleError = () => setImgSrc(keywordFallback);
 
     const handleAdd = (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (onAction) {
-            onAction();
-            return;
-        }
+        if (onAction) { onAction(); return; }
         setShowSelector(true);
     };
 
     const confirmAdd = (e: React.MouseEvent) => {
         e.stopPropagation();
-        // Add to cart with quantity
         for (let i = 0; i < quantity; i++) {
             addToCart(item, selectedCut);
         }
@@ -152,36 +181,49 @@ export default function ProductCard({
         setTimeout(() => setIsAdded(false), 2000);
     };
 
+    // Navigate directly to the butcher's page, not a search
     const handleNavigate = () => {
-        router.push(`/butchers?q=${encodeURIComponent(item.name)}`);
+        router.push(`/butchers/${item.butcher}`);
     };
 
-    const CUTS = ['Curry Cut', 'Biryani Cut', 'Boneless', 'Tandoori Cut', 'Minced'];
-
     const SelectorModal = () => (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm" onClick={(e) => { e.stopPropagation(); setShowSelector(false); }}>
-            <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
+        <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm"
+            onClick={(e) => { e.stopPropagation(); setShowSelector(false); }}
+        >
+            <div
+                className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300"
+                onClick={e => e.stopPropagation()}
+            >
                 <div className="relative h-48 bg-slate-100">
-                    <img src={imgSrc} className="w-full h-full object-cover" alt="" />
+                    <img src={imgSrc} onError={handleError} className="w-full h-full object-cover" alt={item.name} />
                     <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent" />
                 </div>
+
                 <div className="p-8 space-y-6">
                     <div>
                         <div className="flex justify-between items-start">
                             <h3 className="text-2xl font-black uppercase tracking-tighter italic">{item.name}</h3>
-                            <p className="text-xl font-black text-rose-600 italic">₹{item.price}</p>
+                            <p className="text-xl font-black text-rose-600 italic">₹{formatPrice(item.price)}</p>
                         </div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Direct from local master butchers</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+                            {item.butcher_name} · Direct from local master butchers
+                        </p>
                     </div>
 
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Select Cut Style</label>
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            Select Cut Style
+                        </label>
                         <div className="flex flex-wrap gap-2">
-                            {CUTS.map(cut => (
+                            {cuts.map(cut => (
                                 <button
                                     key={cut}
                                     onClick={() => setSelectedCut(cut)}
-                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${selectedCut === cut ? 'border-rose-600 bg-rose-50 text-rose-600' : 'border-slate-100 text-slate-400 hover:border-slate-200'}`}
+                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 transition-all ${selectedCut === cut
+                                            ? 'border-rose-600 bg-rose-50 text-rose-600'
+                                            : 'border-slate-100 text-slate-400 hover:border-slate-200'
+                                        }`}
                                 >
                                     {cut}
                                 </button>
@@ -191,16 +233,28 @@ export default function ProductCard({
 
                     <div className="flex items-center justify-between py-4 border-y border-slate-50">
                         <div className="space-y-1">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quantity (Units)</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quantity</span>
                             <div className="flex items-center gap-4">
-                                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-rose-100 transition-colors"><Minus className="w-4 h-4" /></button>
+                                <button
+                                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                    className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-rose-100 transition-colors"
+                                >
+                                    <Minus className="w-4 h-4" />
+                                </button>
                                 <span className="text-xl font-black italic w-8 text-center">{quantity}</span>
-                                <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-rose-100 transition-colors"><Plus className="w-4 h-4" /></button>
+                                <button
+                                    onClick={() => setQuantity(quantity + 1)}
+                                    className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-rose-100 transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                </button>
                             </div>
                         </div>
                         <div className="text-right">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Price</span>
-                            <p className="text-3xl font-black italic text-slate-900">₹{(Number(item.price) * quantity).toFixed(2)}</p>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total</span>
+                            <p className="text-3xl font-black italic text-slate-900">
+                                ₹{formatPrice(Number(item.price) * quantity)}
+                            </p>
                         </div>
                     </div>
 
@@ -215,6 +269,7 @@ export default function ProductCard({
         </div>
     );
 
+    // ── PORTRAIT VARIANT ──────────────────────────────────────
     if (variant === 'portrait') {
         return (
             <div className="group cursor-pointer" onClick={handleNavigate}>
@@ -226,10 +281,13 @@ export default function ProductCard({
                         onError={handleError}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                     />
-                    <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-2">
+                    <div className="absolute bottom-6 left-6 right-6">
                         <button
                             onClick={handleAdd}
-                            className={`w-full h-12 backdrop-blur rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all shadow-xl ${isAdded ? 'bg-emerald-500 text-white' : 'bg-white/90 text-slate-900 hover:bg-rose-600 hover:text-white'}`}
+                            className={`w-full h-12 backdrop-blur rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all shadow-xl ${isAdded
+                                    ? 'bg-emerald-500 text-white'
+                                    : 'bg-white/90 text-slate-900 hover:bg-rose-600 hover:text-white'
+                                }`}
                         >
                             {isAdded ? <Check className="w-3 h-3" /> : <ShoppingBag className="w-3 h-3" />}
                             {isAdded ? 'ADDED' : buttonLabel}
@@ -238,18 +296,21 @@ export default function ProductCard({
                 </div>
                 <div className="mt-6 text-center space-y-1">
                     <h3 className="text-lg font-black uppercase tracking-tight text-slate-900">{item.name}</h3>
-                    <p className="text-rose-600 font-black italic">₹{item.price}</p>
+                    <p className="text-rose-600 font-black italic">₹{formatPrice(item.price)}</p>
                 </div>
             </div>
         );
     }
 
+    // ── DEFAULT VARIANT ───────────────────────────────────────
     return (
         <div
             onClick={handleNavigate}
             className="bg-white p-5 rounded-[3rem] shadow-sm hover:shadow-2xl transition-all duration-500 border border-slate-100 hover:border-rose-100 group cursor-pointer"
         >
             {showSelector && <SelectorModal />}
+
+            {/* Product Image */}
             <div className="aspect-square rounded-[2.5rem] overflow-hidden bg-slate-100 mb-6 relative">
                 <img
                     src={imgSrc}
@@ -257,6 +318,7 @@ export default function ProductCard({
                     onError={handleError}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
+                {/* Hover badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2">
                     <div className="bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-100 shadow-sm flex items-center gap-1.5 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
                         <Check className="w-2.5 h-2.5 text-emerald-600" />
@@ -271,37 +333,65 @@ export default function ProductCard({
                     <ArrowRight className="w-4 h-4 text-slate-900" />
                 </div>
             </div>
+
+            {/* Product Info */}
             <div className="space-y-4">
                 <div className="space-y-1">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{item.category}</p>
-                    <h4 className="font-black text-slate-900 text-base uppercase tracking-tight line-clamp-1">{item.name}</h4>
-                    {/* B7: Small Macro Indicator */}
+
+                    <div className="flex items-center justify-between gap-2">
+                        <h4 className="font-black text-slate-900 text-base uppercase tracking-tight line-clamp-1 flex-1">
+                            {item.name}
+                        </h4>
+                        {item.butcher_is_busy && (
+                            <div className="flex items-center gap-1 bg-gradient-to-r from-amber-600 to-rose-600 text-white px-2 py-1 rounded-lg animate-pulse shrink-0 shadow-lg">
+                                <Clock className="w-3 h-3" />
+                                <span className="text-[8px] font-black uppercase tracking-widest">Busy</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800 italic">
+                        {item.butcher_name}
+                    </p>
+
+                    {/* Macro indicator bars — only show if data exists */}
                     {(item.protein_g || item.fat_g || item.calories) && (
                         <div className="flex gap-2 mt-2">
-                            <div className="flex flex-col gap-0.5">
-                                <span className="text-[7px] font-black text-slate-300 uppercase">Prot</span>
-                                <div className="w-6 h-1 bg-blue-500 rounded-full" />
-                            </div>
-                            <div className="flex flex-col gap-0.5">
-                                <span className="text-[7px] font-black text-slate-300 uppercase">Fat</span>
-                                <div className="w-6 h-1 bg-amber-500 rounded-full" />
-                            </div>
-                            <div className="flex flex-col gap-0.5">
-                                <span className="text-[7px] font-black text-slate-300 uppercase">Cal</span>
-                                <div className="w-6 h-1 bg-rose-500 rounded-full" />
-                            </div>
+                            {item.protein_g ? (
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-[7px] font-black text-slate-300 uppercase">Prot</span>
+                                    <div className="w-6 h-1 bg-blue-500 rounded-full" />
+                                </div>
+                            ) : null}
+                            {item.fat_g ? (
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-[7px] font-black text-slate-300 uppercase">Fat</span>
+                                    <div className="w-6 h-1 bg-amber-500 rounded-full" />
+                                </div>
+                            ) : null}
+                            {item.calories ? (
+                                <div className="flex flex-col gap-0.5">
+                                    <span className="text-[7px] font-black text-slate-300 uppercase">Cal</span>
+                                    <div className="w-6 h-1 bg-rose-500 rounded-full" />
+                                </div>
+                            ) : null}
                         </div>
                     )}
                 </div>
 
+                {/* Price + Add Button */}
                 <div className="flex items-center justify-between pt-2 border-t border-slate-50">
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Starts At</p>
-                        <p className="text-lg font-black text-rose-600 italic">₹{item.price}</p>
+                        <p className="text-lg font-black text-rose-600 italic">₹{formatPrice(item.price)}</p>
                     </div>
                     <button
                         onClick={handleAdd}
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-lg active:scale-90 ${isAdded ? 'bg-emerald-500 text-white' : 'bg-slate-900 text-white hover:bg-rose-600'}`}
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-lg active:scale-90 ${isAdded
+                                ? 'bg-emerald-500 text-white'
+                                : 'bg-slate-900 text-white hover:bg-rose-600'
+                            }`}
                     >
                         {isAdded ? <Check className="w-5 h-5" /> : <ShoppingBag className="w-5 h-5" />}
                     </button>
@@ -310,7 +400,7 @@ export default function ProductCard({
                 {showButchersLink && (
                     <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-rose-600 transition-colors">
                         <MapPin className="w-3 h-3" />
-                        <span>View Local Butchers</span>
+                        <span>View in {item.butcher_name}</span>
                     </div>
                 )}
             </div>

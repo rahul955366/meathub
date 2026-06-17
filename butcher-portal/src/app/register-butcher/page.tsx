@@ -10,12 +10,14 @@ export default function ButcherRegistrationPage() {
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
-        shop_name: '',
-        owner_name: '',
+        username: '',
+        password: '',
+        confirm_password: '',
+        first_name: '', // was owner_name
         email: '',
         phone: '',
         address: '',
-        experience_years: '',
+        shop_name: '',
         specialization: 'MUTTON'
     });
 
@@ -23,12 +25,37 @@ export default function ButcherRegistrationPage() {
         e.preventDefault();
         setLoading(true);
 
-        // Mock API Call - Will connect to ButcherViewSet.create in Phase 25
-        setTimeout(() => {
+        if (formData.password !== formData.confirm_password) {
+            toast.error("Passwords do not match");
             setLoading(false);
-            setIsSubmitted(true);
-            toast.success("Registration submitted for review!");
-        }, 1500);
+            return;
+        }
+
+        try {
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const res = await fetch(`${API_URL}/api/auth/register/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...formData,
+                    role: 'BUTCHER'
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setIsSubmitted(true);
+                toast.success("Registration successful! Welcome to the network.");
+            } else {
+                const errorMsg = data.details ? Object.values(data.details).flat().join(', ') : (data.message || "Registration failed");
+                toast.error(errorMsg);
+            }
+        } catch (error) {
+            toast.error("Connection error. Is the server running?");
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (isSubmitted) {
@@ -146,6 +173,37 @@ export default function ButcherRegistrationPage() {
                                         </div>
                                     </div>
                                     <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Owner Name</label>
+                                        <div className="relative">
+                                            <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                                            <input
+                                                required
+                                                type="text"
+                                                className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-4 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all"
+                                                placeholder="Full Name"
+                                                value={formData.first_name}
+                                                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Email Address</label>
+                                        <div className="relative">
+                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                                            <input
+                                                required
+                                                type="email"
+                                                className="w-full h-14 bg-slate-50 border border-slate-100 rounded-2xl pl-12 pr-4 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-rose-500/50 transition-all"
+                                                placeholder="partner@meathub.com"
+                                                value={formData.email}
+                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Contact Number</label>
                                         <div className="relative">
                                             <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
@@ -176,6 +234,31 @@ export default function ButcherRegistrationPage() {
                                     </div>
                                 </div>
 
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-slate-50 rounded-3xl border border-slate-100">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-2">Choose Username</label>
+                                        <input
+                                            required
+                                            type="text"
+                                            className="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 text-xs font-black focus:outline-none"
+                                            placeholder="e.g. royal_mutton"
+                                            value={formData.username}
+                                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-2">Set Password</label>
+                                        <input
+                                            required
+                                            type="password"
+                                            className="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 text-xs font-black focus:outline-none"
+                                            placeholder="••••••••"
+                                            value={formData.password}
+                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-2">Meat Specialization</label>
                                     <select
@@ -185,7 +268,7 @@ export default function ButcherRegistrationPage() {
                                     >
                                         <option value="MUTTON">Mutton Specialist</option>
                                         <option value="CHICKEN">Poultry Expert</option>
-                                        <option value="FISH">Cold-Chain Seafood</option>
+                                        <option value="FISH">Seafood specialist</option>
                                         <option value="ALL">Full Marketplace</option>
                                     </select>
                                 </div>

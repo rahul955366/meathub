@@ -3,11 +3,22 @@
 import AuthForm from '@/components/AuthForm';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+
+function LoginContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams.get('redirect') || '/';
+
+    return (
+        <div className="bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-8 md:p-12 border border-slate-50">
+            <AuthForm onSuccess={() => router.push(redirectTo)} />
+        </div>
+    );
+}
 
 export default function LoginPage() {
-    const router = useRouter();
-
     return (
         <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 pt-24">
             <motion.div
@@ -24,9 +35,9 @@ export default function LoginPage() {
                     </Link>
                 </div>
 
-                <div className="bg-white rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] p-8 md:p-12 border border-slate-50">
-                    <AuthForm onSuccess={() => router.push('/')} />
-                </div>
+                <Suspense fallback={<div className="h-64 flex items-center justify-center"><div className="w-8 h-8 border-4 border-rose-600 border-t-transparent rounded-full animate-spin" /></div>}>
+                    <LoginContent />
+                </Suspense>
 
                 <div className="mt-12 text-center">
                     <Link

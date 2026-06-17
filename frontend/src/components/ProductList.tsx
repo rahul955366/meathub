@@ -13,10 +13,48 @@ interface ProductListProps {
 export default function ProductList({ initialItems }: ProductListProps) {
     const { searchQuery } = useAppContext();
 
-    const filteredItems = initialItems.filter((item: MeatItem) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const getDistance = (bLat: number = 17.4944, bLng: number = 78.3908) => {
+        // Use default coords if no user location (e.g. KPHB center)
+        const userLat = 17.4944;
+        const userLng = 78.3908;
+        const rad = Math.PI / 180;
+        const dLat = (bLat - userLat) * rad;
+        const dLng = (bLng - userLng) * rad;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(userLat * rad) * Math.cos(bLat * rad) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return 6371 * c;
+    };
+
+    const filteredItems = initialItems
+        .filter((item: MeatItem) =>
+            item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            item.category.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .sort((a, b) => {
+            const distA = getDistance(a.butcher_lat, a.butcher_lng);
+            const distB = getDistance(b.butcher_lat, b.butcher_lng);
+            const NEAREST_THRESHOLD = 5.0; // 5km
+
+            const aIsNearest = distA <= NEAREST_THRESHOLD;
+            const bIsNearest = distB <= NEAREST_THRESHOLD;
+
+            // Group 1: Nearest artisans
+            if (aIsNearest && bIsNearest) {
+                // Inside nearest: Less Busy first
+                if (a.butcher_is_busy && !b.butcher_is_busy) return 1;
+                if (!a.butcher_is_busy && b.butcher_is_busy) return -1;
+                return distA - distB;
+            }
+
+            // Group priorities
+            if (aIsNearest && !bIsNearest) return -1;
+            if (!aIsNearest && bIsNearest) return 1;
+
+            // Both are far, sort by distance
+            return distA - distB;
+        });
 
     const categories = ['CHICKEN', 'MUTTON', 'FISH', 'PRAWNS', 'PET', 'GYM'];
 

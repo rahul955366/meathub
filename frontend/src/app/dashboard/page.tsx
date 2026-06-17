@@ -9,33 +9,35 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAppContext } from '@/context/AppContext';
+import { getUserProfile, getOrders } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 export default function DashboardPage() {
-    const { user, logout } = useAppContext();
+    const { user, token, logout } = useAppContext();
     const [profile, setProfile] = useState<any>(null);
+    const [orderCount, setOrderCount] = useState(0);
     const [loading, setLoading] = useState(true);
 
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            if (!user) return;
+        const fetchData = async () => {
+            if (!token) return;
             try {
-                const token = localStorage.getItem('token');
-                const res = await fetch(`${API_URL}/api/profiles/me/`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                setProfile(data);
+                const [prof, ords] = await Promise.all([
+                    getUserProfile(token),
+                    getOrders(token)
+                ]);
+                setProfile(prof);
+                setOrderCount(ords.length);
             } catch (err) {
                 console.error("Dashboard Load Error:", err);
             } finally {
                 setLoading(false);
             }
         };
-        fetchProfile();
-    }, [user]);
+        fetchData();
+    }, [token]);
 
     const copyReferral = () => {
         if (profile?.referral_code) {
@@ -155,7 +157,14 @@ export default function DashboardPage() {
                                 </button>
                             </div>
 
-                            <button className="w-full h-14 bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-rose-200 flex items-center justify-center gap-3 hover:bg-rose-700 transition-all">
+                            <button
+                                onClick={() => {
+                                    if (!profile?.referral_code) return;
+                                    const text = `Join me on MeatHub and use my referral code ${profile.referral_code} to get 100 points! Check it out: ${window.location.origin}`;
+                                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                                }}
+                                className="w-full h-14 bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-rose-200 flex items-center justify-center gap-3 hover:bg-rose-700 transition-all"
+                            >
                                 <Share2 className="w-4 h-4" /> Share Referral Link
                             </button>
                         </motion.div>
@@ -179,7 +188,7 @@ export default function DashboardPage() {
                                     <Heart className="w-7 h-7" />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-black italic text-slate-900 tracking-tighter">14 Orders</p>
+                                    <p className="text-2xl font-black italic text-slate-900 tracking-tighter">{orderCount} {orderCount === 1 ? 'Order' : 'Orders'}</p>
                                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Artisanal Support Index</p>
                                 </div>
                             </div>
@@ -207,7 +216,29 @@ export default function DashboardPage() {
                                         <div className="flex justify-between items-end">
                                             <div className="flex items-center gap-3">
                                                 <reward.icon className="w-5 h-5 text-rose-600" />
-                                                <span className="text-xs font-black uppercase tracking-widest text-slate-700">{reward.title}</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-black uppercase tracking-widest text-slate-700">{reward.title}</span>
+                                                    {reward.current >= reward.points && (
+                                                        <button 
+                                                            onClick={async () => {
+                                                                if (!token) return;
+                                                                const api = await import('@/lib/api');
+                                                                const success = await api.redeemLoyaltyPoints(token, reward.points);
+                                                                if (success) {
+                                                                    toast.success(`Redeemed ${reward.points} points for ${reward.title}!`);
+                                                                    // Refresh profile
+                                                                    const prof = await api.getUserProfile(token);
+                                                                    setProfile(prof);
+                                                                } else {
+                                                                    toast.error("Redemption failed.");
+                                                                }
+                                                            }}
+                                                            className="text-[8px] font-black uppercase tracking-[0.2em] text-rose-600 hover:text-rose-800 transition-colors bg-rose-50 px-2 py-1 rounded-md w-fit mt-1"
+                                                        >
+                                                            Redeem Now
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                                 {reward.current >= reward.points ? "UNLOCKED" : `${reward.points - reward.current} points to go`}

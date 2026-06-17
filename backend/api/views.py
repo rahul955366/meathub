@@ -87,6 +87,32 @@ def me(request):
         'is_staff': request.user.is_staff
     })
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def redeem_loyalty_points(request):
+    """
+    Redeem loyalty points for internal credits or perks.
+    Expects {'amount': int}
+    """
+    try:
+        profile = request.user.profile
+        amount = int(request.data.get('amount', 0))
+        
+        if amount <= 0:
+            return Response({"error": "Invalid amount"}, status=400)
+            
+        if profile.loyalty_points < amount:
+            return Response({"error": "Insufficient loyalty points balance"}, status=400)
+            
+        success = profile.redeem_points(amount)
+        if success:
+            return Response({
+                "message": f"Successfully redeemed {amount} points!",
+                "new_balance": profile.loyalty_points
+            })
+        return Response({"error": "Redemption failed"}, status=400)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
 # Configure Gemini AI (Disabled as per user preference)
 # if settings.GEMINI_API_KEY:
 #     import google.generativeai as genai
@@ -119,23 +145,25 @@ class ButcherViewSet(viewsets.ModelViewSet):
     queryset = Butcher.objects.none()
 
     def get_queryset(self):
+        from django.db.models import Count, Avg, Q
         return Butcher.objects.select_related('user', 'village_source') \
                                .annotate(
                                    rating=Avg('reviews__rating'),
-                                   total_orders=Count('orders', distinct=True)
+                                   total_orders=Count('orders', distinct=True),
+                                   live_active_orders=Count('orders', filter=Q(orders__status__in=['PENDING', 'CONFIRMED', 'PROCESSING']), distinct=True)
                                ) \
                                .filter(status='APPROVED')
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def reset_stock(self, request, pk=None):
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def reset_stock(self, request):
         """
         Special Day 3 Feature: Resets all meat items to AVAILABLE for the morning.
+        Authenticates based on the logged-in user's butcher profile.
         """
-        butcher = self.get_object()
-        # Verify ownership: Butcher can only reset their own shop
-        if request.user != butcher.user and not request.user.is_staff:
-            return Response({"error": "Unauthorized. You do not own this shop."}, status=status.HTTP_403_FORBIDDEN)
+        if not hasattr(request.user, 'butcher_profile'):
+             return Response({"error": "Unauthorized. Only partner butchers can reset stock."}, status=status.HTTP_403_FORBIDDEN)
         
+        butcher = request.user.butcher_profile
         from .models import MeatItem
         MeatItem.objects.filter(butcher=butcher).update(status='AVAILABLE')
         
@@ -149,17 +177,49 @@ class MeatItemViewSet(viewsets.ModelViewSet):
     Supports ?mine=true for butcher-specific inventory.
     """
     serializer_class = MeatItemSerializer
-    permission_classes = [AllowAny]
     queryset = MeatItem.objects.none()
 
+    def get_permissions(self):
+        """Read operations are public. Write operations require butcher authentication."""
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticated()]
+        return [AllowAny()]
+
+    def perform_create(self, serializer):
+        """Force the created item to be owned by the authenticated butcher only."""
+        if not hasattr(self.request.user, 'butcher_profile'):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only approved butchers can add inventory items.")
+        serializer.save(butcher=self.request.user.butcher_profile)
+
+    def perform_update(self, serializer):
+        """Ensure butchers can only update their own items."""
+        instance = self.get_object()
+        if hasattr(self.request.user, 'butcher_profile'):
+            if instance.butcher != self.request.user.butcher_profile:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("You can only edit your own items.")
+        serializer.save()
+
     def get_queryset(self):
+        from django.db.models import Count, Q
+        
+        # Base Query correctly annotating live_orders on the butcher dimension
+        qs = MeatItem.objects.select_related('butcher').annotate(
+            butcher_live_orders=Count(
+                'butcher__orders', 
+                filter=Q(butcher__orders__status__in=['PENDING', 'CONFIRMED', 'PROCESSING']), 
+                distinct=True
+            )
+        )
+
         if self.request.query_params.get('mine') == 'true':
             if self.request.user.is_authenticated and hasattr(self.request.user, 'butcher_profile'):
-                return MeatItem.objects.filter(
+                return qs.filter(
                     butcher=self.request.user.butcher_profile,
                     status='AVAILABLE'
-                ).select_related('butcher')
-        return MeatItem.objects.select_related('butcher').filter(status='AVAILABLE')
+                )
+        return qs.filter(status='AVAILABLE')
 
 
 class SubscriptionViewSet(viewsets.ModelViewSet):
@@ -308,10 +368,11 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return [AllowAny()]
 
     def get_queryset(self):
-        butcher_id = self.request.query_params.get('butcher_id')
+        # Accept both ?butcher= and ?butcher_id= query params for compatibility
+        butcher_id = self.request.query_params.get('butcher_id') or self.request.query_params.get('butcher')
         if butcher_id:
-            return Review.objects.filter(butcher_id=butcher_id)
-        return Review.objects.all()
+            return Review.objects.filter(butcher_id=butcher_id).select_related('user', 'butcher').order_by('-created_at')
+        return Review.objects.all().select_related('user', 'butcher').order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -339,7 +400,9 @@ def create_order(request: Request) -> Response:
     data: Dict[str, Any] = request.data
     butcher_id: Optional[int] = data.get('butcher_id')
     items_data: List[Dict[str, Any]] = data.get('items', [])
-    is_sunday_special = data.get('is_sunday_special', False)
+    # Support both key names for Sunday special (frontend sends 'sunday_special', backend expects 'is_sunday_special')
+    is_sunday_special = data.get('is_sunday_special', data.get('sunday_special', False))
+    sunday_slot = data.get('sunday_slot', data.get('sundaySlot', ''))
 
     # 0. Saturday 12 PM Cutoff Logic
     now = timezone.localtime()
@@ -452,6 +515,8 @@ def create_order(request: Request) -> Response:
                 payment_status=payment_status,
                 delivery_address=data.get('delivery_address', ''),
                 delivery_phone=data.get('delivery_phone', ''),
+                user_lat=data.get('user_lat'),
+                user_lng=data.get('user_lng'),
             )
 
             for item in validated_items:
@@ -598,7 +663,7 @@ def nearby_butchers(request: Request) -> Response:
             # Active (in-progress) orders for busy indicator
             active_order_count = Order.objects.filter(
                 butcher=butcher,
-                status__in=['CONFIRMED', 'PROCESSING']
+                status__in=['PENDING', 'CONFIRMED', 'PROCESSING']
             ).count()
             
             nearby.append({
@@ -615,11 +680,11 @@ def nearby_butchers(request: Request) -> Response:
                 'hygiene_score': butcher.hygiene_score,
                 'load_factor': load_factor,
                 'active_orders': active_order_count,
-                'is_busy': active_order_count >= 5,
+                'is_busy': butcher.is_busy or active_order_count >= 3,
             })
 
-    # Sort: is_official first (True > False), then by load_factor (lower first), then by distance
-    nearby.sort(key=lambda x: (not x['is_official'], x['load_factor'], x['distance_km']))
+    # Sort: Not busy first (False < True), then by distance (Lower < Higher)
+    nearby.sort(key=lambda x: (x['is_busy'], x['distance_km']))
     
     return Response(nearby)
 
@@ -692,10 +757,23 @@ class ButcherWasteCollectionViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def get_queryset(self):
+        # ?mine=true → show only this butcher's waste, including unavailable (for management)
+        if self.request.query_params.get('mine') == 'true':
+            if self.request.user.is_authenticated and hasattr(self.request.user, 'butcher_profile'):
+                return ButcherWasteCollection.objects.filter(butcher=self.request.user.butcher_profile)
+            return ButcherWasteCollection.objects.none()
+        # Public: filter by butcher_id if provided, only show available
         butcher_id = self.request.query_params.get('butcher_id')
         if butcher_id:
-            return self.queryset.filter(butcher_id=butcher_id, is_available=True)
-        return self.queryset.filter(is_available=True)
+            return ButcherWasteCollection.objects.filter(butcher_id=butcher_id, is_available=True)
+        return ButcherWasteCollection.objects.filter(is_available=True)
+
+    def perform_create(self, serializer):
+        """Automatically assign the waste listing to the logged-in butcher."""
+        if not hasattr(self.request.user, 'butcher_profile'):
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only approved butchers can post waste listings.")
+        serializer.save(butcher=self.request.user.butcher_profile)
 
 
 class PetFoodProductViewSet(viewsets.ModelViewSet):

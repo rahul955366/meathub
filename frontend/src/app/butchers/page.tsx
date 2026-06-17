@@ -6,7 +6,7 @@ import AIChat from '@/components/AIChat';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ButchersPage() {
+export default async function ButcherListings() {
     const butchers = await getButchers();
     const items = await getMeatItems();
 

@@ -8,7 +8,7 @@ from .views import (
     UserProfileViewSet, RegisterView, create_order, contextual_ai,
     village_sources, MyTokenObtainPairView, nearby_butchers, official_items,
     upload_order_video, ReviewViewSet, ButcherWasteCollectionViewSet,
-    PetFoodProductViewSet, me
+    PetFoodProductViewSet, me, redeem_loyalty_points
 )
 from .password_reset_views import request_password_reset, confirm_password_reset
 from .payment_views import create_payment_order, verify_payment, get_payment_status
@@ -27,6 +27,7 @@ router.register(r'waste-collection', ButcherWasteCollectionViewSet, basename='wa
 router.register(r'pet-food-products', PetFoodProductViewSet, basename='pet-food-product')
 
 urlpatterns = [
+    path('butchers/nearby/', nearby_butchers, name='nearby-butchers'),
     path('', include(router.urls)),
     path('auth/register/', RegisterView.as_view(), name='auth_register'),
     path('auth/login/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -43,6 +44,6 @@ urlpatterns = [
     path('create-order/', create_order, name='create-order'),
     path('official-items/', official_items, name='official-items'),
     path('contextual-ai/', contextual_ai, name='contextual-ai'),
-    path('butchers/nearby/', nearby_butchers, name='nearby-butchers'),
     path('village-sources/', village_sources, name='village-sources'),
+    path('auth/redeem-points/', redeem_loyalty_points, name='redeem_points'),
 ]

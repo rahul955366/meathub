@@ -7,6 +7,7 @@ export interface User {
     is_staff?: boolean;
     is_superuser?: boolean;
     is_butcher?: boolean;
+    butcher_id?: number | null;
 }
 
 export interface Address {

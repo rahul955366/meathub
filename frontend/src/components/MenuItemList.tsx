@@ -45,9 +45,7 @@ export default function MenuItemList({ item, onItemClick }: MenuItemProps) {
     const isSpicy = (item.id * 13) % 4 === 0;
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+        <div
             className="group flex gap-4 md:gap-6 p-4 md:p-6 bg-white border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors cursor-pointer"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -129,6 +127,6 @@ export default function MenuItemList({ item, onItemClick }: MenuItemProps) {
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 }

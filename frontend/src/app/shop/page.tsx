@@ -17,6 +17,7 @@ function ShopContent() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState(queryParam);
     const [selectedCategory, setSelectedCategory] = useState('ALL');
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
     useEffect(() => {
         setSearchQuery(queryParam);
@@ -26,8 +27,15 @@ function ShopContent() {
         async function loadData() {
             setLoading(true);
             try {
+                // Get User Location
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                    () => setUserLocation({ lat: 17.4483, lng: 78.3915 }) // Default to KPHB, Hyderabad
+                );
+
                 const data = await getMeatItems();
-                setItems(data);
+                if (data) setItems(data);
+                else setItems([]);
             } catch (err) {
                 console.error("Failed to fetch shop items", err);
             } finally {
@@ -37,12 +45,54 @@ function ShopContent() {
         loadData();
     }, []);
 
-    const filteredItems = items.filter(item => {
-        const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.category?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCategory = selectedCategory === 'ALL' || item.category?.toUpperCase() === selectedCategory;
-        return matchesSearch && matchesCategory;
-    });
+    const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    };
+
+    const filteredItems = items
+        .filter(item => {
+            const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.butcher_name.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesCategory = selectedCategory === 'ALL' || item.category?.toUpperCase() === selectedCategory;
+            return matchesSearch && matchesCategory;
+        })
+        .sort((a, b) => {
+            if (!userLocation) return 0;
+
+            const distA = a.butcher_lat && a.butcher_lng ? calculateDistance(userLocation.lat, userLocation.lng, a.butcher_lat, a.butcher_lng) : 999;
+            const distB = b.butcher_lat && b.butcher_lng ? calculateDistance(userLocation.lat, userLocation.lng, b.butcher_lat, b.butcher_lng) : 999;
+
+            // Hybrid Sorting Protocol
+            const NEARBY_THRESHOLD = 5; // 5km radius for 'Current Neighborhood'
+            const isNearA = distA <= NEARBY_THRESHOLD;
+            const isNearB = distB <= NEARBY_THRESHOLD;
+
+            // 0. Load Balancing Distance Penalty (+0.5km logical distance if busy)
+            const trafficPenaltyA = a.butcher_is_busy ? 0.5 : 0;
+            const trafficPenaltyB = b.butcher_is_busy ? 0.5 : 0;
+            const effectiveDistA = distA + trafficPenaltyA;
+            const effectiveDistB = distB + trafficPenaltyB;
+
+            // 1. Group by Proximity (Nearby first)
+            if (isNearA && !isNearB) return -1;
+            if (!isNearA && isNearB) return 1;
+
+            if (isNearA && isNearB) {
+                // 2. Sort by Effective Distance (closer or less busy wins)
+                return effectiveDistA - effectiveDistB;
+            }
+
+            // Outside neighborhood - just sort by distance
+            return distA - distB;
+        });
 
     const categories = ['ALL', 'CHICKEN', 'MUTTON', 'FISH', 'PRAWNS', 'GYM', 'PET'];
 
@@ -116,7 +166,7 @@ function ShopContent() {
     );
 }
 
-export default function ShopPage() {
+export default function MeatCatalog() {
     return (
         <main className="min-h-screen bg-slate-50 pt-32 pb-24 text-slate-900">
             <Suspense fallback={<div className="container mx-auto px-4 text-center py-20 font-black uppercase tracking-widest text-slate-400">Loading Catalog Logistics...</div>}>

@@ -15,7 +15,7 @@ export default function ProgressBar() {
     useEffect(() => {
         NProgress.done();
         return () => {
-            NProgress.start();
+            // No startup here to avoid duplicate performance marks
         };
     }, [pathname, searchParams]);
 

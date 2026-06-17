@@ -35,9 +35,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}>
         <AppProvider>
-          <Suspense fallback={null}>
+          {/* <Suspense fallback={null}>
             <ProgressBar />
-          </Suspense>
+          </Suspense> */}
           <Toaster position="bottom-center" />
           <Navbar />
           <div className="pt-20">

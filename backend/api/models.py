@@ -60,6 +60,14 @@ class UserProfile(models.Model):
             self.referral_code = f"CHEF-{str(uuid.uuid4())[:8].upper()}"
         super().save(*args, **kwargs)
 
+    def redeem_points(self, amount):
+        """Deduct points if sufficient balance exists."""
+        if self.loyalty_points >= amount:
+            self.loyalty_points -= amount
+            self.save()
+            return True
+        return False
+
     class Meta:
         indexes = [
             models.Index(fields=['phone'], name='idx_phone'),
@@ -171,6 +179,9 @@ class Butcher(models.Model):
     opening_time = models.CharField(max_length=20, default="06:00 AM")
     closing_time = models.CharField(max_length=20, default="09:00 PM")
     daily_order_quota = models.IntegerField(default=50, help_text="Maximum orders allowed per day")
+    active_orders = models.IntegerField(default=0, help_text="Current number of active/pending orders")
+    is_busy = models.BooleanField(default=False, help_text="Manual or auto-flag for load balancing")
+    is_gym_approved = models.BooleanField(default=False, help_text="Certified for high-protein gym subscriptions")
     
     village_source = models.ForeignKey(
         VillageSource, 
@@ -516,8 +527,10 @@ class Order(models.Model):
     status_history = models.JSONField(
         default=list,
         blank=True,
-        help_text="History of status changes (timestamp, status, changed_by)"
+        help_text="Historical record of status changes"
     )
+    user_lat = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    user_lng = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     cancelled_reason = models.TextField(
         blank=True,
         null=True,

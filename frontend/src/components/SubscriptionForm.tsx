@@ -6,6 +6,7 @@ import { X, Calendar, Clock, Weight, ChevronRight, CheckCircle2, ShieldCheck, Za
 import { getMeatItems, getButchers, createSubscription, createGymSubscription, createPetSubscription, getUserProfile } from '@/lib/api';
 import { MeatItem, Butcher, Subscription, GymSubscription, PetSubscription, UserProfile } from '@/types';
 import { useAppContext } from '@/context/AppContext';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 interface SubscriptionFormProps {
@@ -19,6 +20,7 @@ interface SubscriptionFormProps {
 
 export default function SubscriptionForm({ type, planId, petType, gymGoal, initialItemId, onClose }: SubscriptionFormProps) {
     const { token } = useAppContext();
+    const router = useRouter();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [butchers, setButchers] = useState<Butcher[]>([]);
@@ -38,15 +40,19 @@ export default function SubscriptionForm({ type, planId, petType, gymGoal, initi
 
     useEffect(() => {
         getButchers().then(data => {
-            setButchers(data);
-            if (type !== 'GENERAL') {
-                const flagship = data.find(b => b.is_official) || data[0];
-                if (flagship) {
-                    setFormData(prev => ({ ...prev, butcherId: flagship.id.toString() }));
+            if (data) {
+                setButchers(data);
+                if (type !== 'GENERAL') {
+                    const flagship = data.find(b => b.is_official) || data[0];
+                    if (flagship) {
+                        setFormData(prev => ({ ...prev, butcherId: flagship.id.toString() }));
+                    }
                 }
             }
         });
-        getMeatItems().then(setMeatItems);
+        getMeatItems().then(data => {
+            if (data) setMeatItems(data);
+        });
         if (token) getUserProfile(token).then(setProfile);
     }, [token, type]);
 
@@ -119,6 +125,7 @@ export default function SubscriptionForm({ type, planId, petType, gymGoal, initi
             if (success) {
                 toast.success(`${type} Cycle Activated!`);
                 onClose();
+                router.push('/dashboard/subscriptions');
             } else {
                 toast.error("Protocol failed. Check logistics.");
             }
@@ -146,13 +153,13 @@ export default function SubscriptionForm({ type, planId, petType, gymGoal, initi
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-md">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md overflow-hidden">
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="bg-white rounded-[3rem] w-full max-w-2xl overflow-hidden shadow-2xl relative border border-slate-100"
+                className="bg-white rounded-[2.5rem] w-full max-w-2xl max-h-[85vh] shadow-2xl relative border border-slate-100 flex flex-col overflow-hidden"
             >
                 {/* Header */}
                 <div className="bg-slate-900 p-8 text-white flex justify-between items-center relative overflow-hidden">
@@ -177,7 +184,7 @@ export default function SubscriptionForm({ type, planId, petType, gymGoal, initi
                     />
                 </div>
 
-                <div className="p-10 space-y-8">
+                <div className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 min-h-0 scrollbar-hide">
                     <AnimatePresence mode="wait">
                         {step === 1 && (
                             <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
@@ -210,8 +217,9 @@ export default function SubscriptionForm({ type, planId, petType, gymGoal, initi
                                         {meatItems.filter(m => {
                                             // Enforce Official Flagship items for GYM and PET as per vision
                                             const isOfficial = butchers.find(b => b.id === m.butcher)?.is_official;
-                                            if (type === 'GYM') return isOfficial && (m.category === 'CHICKEN' || m.name.includes('Lean') || m.name.includes('Breast'));
-                                            if (type === 'PET') return isOfficial && (m.name.includes('Raw') || m.category === 'FISH' || m.category === 'MUTTON');
+                                            const itemName = m.name.toUpperCase();
+                                            if (type === 'GYM') return isOfficial && (m.category === 'CHICKEN' || m.category === 'MUTTON' || itemName.includes('LEAN') || itemName.includes('BREAST'));
+                                            if (type === 'PET') return isOfficial && (itemName.includes('RAW') || itemName.includes('BONE') || m.category === 'FISH' || m.category === 'MUTTON');
                                             return true;
                                         }).map(m => (
                                             <button
@@ -344,25 +352,33 @@ export default function SubscriptionForm({ type, planId, petType, gymGoal, initi
                         )}
                     </AnimatePresence>
 
-                    {/* Footer Actions */}
-                    <div className="flex gap-4 pt-6">
-                        {step > 1 && (
-                            <button
-                                onClick={handleBack}
-                                className="h-16 px-8 rounded-2xl border-2 border-slate-100 font-black uppercase tracking-widest text-[10px] text-slate-400 hover:bg-slate-50 transition-all"
-                            >
-                                Re-Target
-                            </button>
-                        )}
+                </div>
+
+                {/* Footer Actions - Outside scroll area to remain pinned */}
+                <div className="p-6 md:p-10 bg-slate-50 border-t border-slate-100 flex gap-4">
+                    {step === 1 ? (
                         <button
-                            onClick={step === 3 ? handleSubmit : handleNext}
-                            disabled={loading || (step === 1 && (!formData.butcherId || !formData.meatItemId))}
-                            className="flex-1 h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 hover:bg-rose-600 transition-all shadow-xl disabled:opacity-50 disabled:hover:bg-slate-900"
+                            onClick={onClose}
+                            className="h-16 px-8 rounded-2xl border-2 border-slate-100 font-black uppercase tracking-widest text-[10px] text-slate-400 hover:bg-slate-50 transition-all active:scale-95"
                         >
-                            {loading ? "SYNCING..." : step === 3 ? "ACTIVATE SUBSCRIPTION" : "LOGISTICS CONTINUED"}
-                            {!loading && <ChevronRight className="w-4 h-4" />}
+                            CANCEL
                         </button>
-                    </div>
+                    ) : (
+                        <button
+                            onClick={handleBack}
+                            className="h-16 px-8 rounded-2xl border-2 border-slate-100 font-black uppercase tracking-widest text-[10px] text-slate-400 hover:bg-slate-50 transition-all active:scale-95"
+                        >
+                            BACK
+                        </button>
+                    )}
+                    <button
+                        onClick={step === 3 ? handleSubmit : handleNext}
+                        disabled={loading || (step === 1 && (!formData.butcherId || !formData.meatItemId))}
+                        className="flex-1 h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-3 hover:bg-rose-600 transition-all shadow-xl disabled:opacity-50 disabled:hover:bg-slate-900 active:scale-95"
+                    >
+                        {loading ? "SYNCING..." : step === 3 ? "ACTIVATE SUBSCRIPTION" : "NEXT STEP"}
+                        {!loading && <ChevronRight className="w-4 h-4" />}
+                    </button>
                 </div>
             </motion.div>
         </div>

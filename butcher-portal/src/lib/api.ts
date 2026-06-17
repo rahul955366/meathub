@@ -411,11 +411,11 @@ export async function fetchWasteCollections(): Promise<any[]> {
 
 // ── Order Management ──────────────────────────────────────────
 
-export async function updateOrderStatus(token: string, orderId: number, status: string): Promise<boolean> {
+export async function updateOrderStatus(token: string, orderId: number, status: string, reason?: string): Promise<boolean> {
     const data = await request(`/orders/${orderId}/update-status/`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status, cancellation_reason: reason })
     });
     return data !== null;
 }
@@ -443,4 +443,22 @@ export async function getOrderHistory(token: string, orderId: number): Promise<a
         headers: { Authorization: `Bearer ${token}` }
     });
     return data || [];
+}
+
+// ── Inventory / Stocks ───────────────────────────────────────
+export async function createMeatItem(token: string, payload: Record<string, unknown>): Promise<boolean> {
+    const data = await request(`/items/`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+    });
+    return data !== null;
+}
+
+export async function performMorningReset(token: string): Promise<boolean> {
+    const data = await request(`/butchers/reset_stock/`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+    });
+    return data !== null;
 }

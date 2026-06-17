@@ -63,8 +63,10 @@ export default function AuthForm({ onSuccess, initialMode = 'LOGIN' }: AuthFormP
                         first_name: data.first_name,
                         last_name: data.last_name,
                         id: data.user_id,
-                        is_butcher: data.is_butcher
-                    });
+                        is_butcher: data.is_butcher,
+                        is_staff: data.is_staff,
+                        butcher_id: data.butcher_id ?? null,
+                    }, data.refresh); // Pass refresh token for auto-renewal
                     toast.success(`Welcome back, ${data.username}!`);
                     onSuccess?.();
                 } else {

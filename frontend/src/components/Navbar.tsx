@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 export default function Navbar() {
     const {
         user, cart, cartCount, totalAmount, searchQuery,
-        setSearchQuery, removeFromCart, addToCart, login, logout,
+        setSearchQuery, removeFromCart, addToCart, updateQuantity, login, logout,
         isCartOpen, setIsCartOpen
     } = useAppContext();
 
@@ -286,19 +286,14 @@ export default function Navbar() {
                                                     <p className="text-slate-900 font-black italic text-sm">₹{item.price}</p>
                                                     <div className="flex items-center gap-3 bg-white px-3 py-1.5 rounded-xl shadow-sm border border-slate-100">
                                                         <button
-                                                            onClick={() => {
-                                                                if (item.quantity > 1) {
-                                                                    // Decrease quantity logic (could be added to context, but for now we remove one and add back is complex, better to add updateQuantity to context)
-                                                                    toast.error("Use trash to remove item completely");
-                                                                }
-                                                            }}
+                                                            onClick={() => updateQuantity(item.meat_item_id, item.selectedCut, -1)}
                                                             className="text-slate-400 hover:text-rose-600"
                                                         >
                                                             <Minus className="w-3 h-3" />
                                                         </button>
                                                         <span className="text-xs font-black italic">{item.quantity}</span>
                                                         <button
-                                                            onClick={() => addToCart({ id: item.meat_item_id, name: item.name, price: item.price, image_url: item.image_url } as any, item.selectedCut)}
+                                                            onClick={() => updateQuantity(item.meat_item_id, item.selectedCut, 1)}
                                                             className="text-slate-400 hover:text-rose-600"
                                                         >
                                                             <Plus className="w-3 h-3" />

@@ -14,7 +14,7 @@ export default function ProteinSelection() {
             label: 'Chicken',
             tagline: 'Fresh & Tender',
             gradient: 'from-amber-400 via-orange-400 to-orange-500',
-            image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=80', // Raw chicken pieces on board
+            image: 'https://images.unsplash.com/photo-1598103442097-8b74394b99c6?auto=format&fit=crop&w=800&q=80', // Premium raw chicken portions
             shops: '19 Shops',
             popular: true
         },

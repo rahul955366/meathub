@@ -73,9 +73,8 @@ def update_order_status(request, order_id):
     
     if new_status == 'CANCELLED':
         reason = request.data.get('cancelled_reason', '').strip()
-        if not reason:
-            return Response({'error': 'Cancellation reason required'}, status=status.HTTP_400_BAD_REQUEST)
-        order.cancelled_reason = reason
+        # Make reason optional with a sensible fallback
+        order.cancelled_reason = reason if reason else 'Cancelled by shop'
         if order.payment_method != 'COD':
             order.payment_status = 'REFUNDED'
     
@@ -112,7 +111,7 @@ def get_order_history(request, order_id):
         return Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)
     
     # Permission check: Admin, Butcher(owner), or User(owner)
-    is_owner = order.user_id == request.user.id
+    is_owner = order.user_id is not None and order.user_id == request.user.id
     if not (is_owner or _has_permission(request.user, order)):
         return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
     
@@ -126,9 +125,9 @@ def get_order_history(request, order_id):
     return Response({
         'order_id': order.id,
         'user': {
-            'id': order.user.id,
-            'username': order.user.username,
-            'email': order.user.email
+            'id': order.user.id if order.user else None,
+            'username': order.user.username if order.user else 'Guest',
+            'email': order.user.email if order.user else ''
         },
         'butcher': {
             'id': order.butcher.id,

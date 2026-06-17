@@ -9,6 +9,7 @@ import MenuItemList from './MenuItemList';
 import ShopMenuPad from './ShopMenuPad';
 import { useAppContext } from '@/context/AppContext';
 import { Butcher, MeatItem, VillageSource } from '@/types';
+import { getAccurateImage } from '@/utils/imageHelpers';
 
 // Simple X icon for closing modals
 const X = ({ className }: { className?: string }) => (
@@ -47,8 +48,13 @@ export default function ButcherMenu({
         const interval = setInterval(async () => {
             try {
                 const freshItems = await getMeatItems();
-                const butcherItems = freshItems.filter((i: MeatItem) => i.butcher === butcher.id);
-                if (butcherItems.length > 0) setItems(butcherItems);
+                if (freshItems) {
+                    const butcherItems = freshItems.filter((i: MeatItem) => {
+                        const itemButcherId = typeof i.butcher === 'object' ? (i.butcher as any).id : i.butcher;
+                        return String(itemButcherId) === String(butcher.id);
+                    });
+                    if (butcherItems.length > 0) setItems(butcherItems);
+                }
             } catch { /* silently ignore polling errors */ }
         }, 60000);
         return () => clearInterval(interval);
@@ -323,7 +329,7 @@ export default function ButcherMenu({
                         >
                             <div className="relative h-72">
                                 <img
-                                    src={selectedItem.image_url || require('@/utils/imageHelpers').getAccurateImage(selectedItem.name, selectedItem.category || '')}
+                                    src={selectedItem.image_url || getAccurateImage(selectedItem.name, selectedItem.category || '')}
                                     className="w-full h-full object-cover"
                                     alt={selectedItem.name}
                                 />

@@ -5,9 +5,20 @@ import Link from 'next/link';
 import { MeatItem } from '@/types';
 import AIChat from '@/components/AIChat';
 
-export default async function CategoryPage({ params }: { params: Promise<{ name: string }> }) {
+export default async function CategoryDetails({ params }: { params: Promise<{ name: string }> }) {
     const { name } = await params;
     const allItems = await getMeatItems();
+
+    if (!allItems) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-8 text-center py-40">
+                <div className="space-y-6">
+                    <h1 className="text-4xl font-black text-white italic uppercase tracking-tighter">Hub Synchronization <span className="text-rose-600">Failed</span></h1>
+                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">The master meat logistics backend is currently unreachable. Please check the Artisan Command Center status.</p>
+                </div>
+            </div>
+        );
+    }
 
     const categoryItems = allItems.filter((item: MeatItem) =>
         item.category.toLowerCase() === name.toLowerCase() && item.status === 'AVAILABLE'

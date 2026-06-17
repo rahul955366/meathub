@@ -7,6 +7,7 @@ export interface User {
     is_staff?: boolean;
     is_superuser?: boolean;
     is_butcher?: boolean;
+    butcher_id?: number | null;
 }
 
 export interface Address {
@@ -63,6 +64,9 @@ export interface MeatItem {
     id: number;
     butcher: number;
     butcher_name: string;
+    butcher_is_busy?: boolean;
+    butcher_lat?: number;
+    butcher_lng?: number;
     name: string;
     description: string;
     price: string; // Decimal from backend comes as string usually
@@ -141,7 +145,7 @@ export interface CartItem {
     image_url?: string;
     butcher_id: number;
     category?: string;
-    selectedCut?: string; // Frontend specific
+    selectedCut: string; // Frontend specific
 }
 
 export interface VillageSource {

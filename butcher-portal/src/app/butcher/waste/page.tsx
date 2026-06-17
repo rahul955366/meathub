@@ -7,7 +7,7 @@ import { Plus, Trash2, CheckCircle2, AlertCircle, ShoppingBag } from 'lucide-rea
 import toast from 'react-hot-toast';
 
 export default function WasteManagementPage() {
-    const { token } = useAppContext();
+    const { token, user } = useAppContext();
     const [wasteItems, setWasteItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -24,13 +24,12 @@ export default function WasteManagementPage() {
         if (!token) return;
         setLoading(true);
         try {
-            // We need a way to fetch ONLY the authenticated butcher's waste
-            // The API viewset supports ?butcher_id but we don't have the ID easily here
-            // Let's assume the backend has a 'mine' filter or we can use the general fetch and filter
-            // Actually, the ButcherWasteCollectionViewSet doesn't seem to have a 'mine' filter for non-admins
-            // I should probably add one to the backend or use the profile to get butcher_id
-            const data = await fetchWasteCollections();
-            setWasteItems(data);
+            // Fetch only this butcher's waste collections using authenticated endpoint
+            const data = await request('/waste-collection/?mine=true', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const items = Array.isArray(data) ? data : (data as any)?.results || [];
+            setWasteItems(items);
         } catch (error) {
             toast.error("Failed to load waste listings");
         } finally {

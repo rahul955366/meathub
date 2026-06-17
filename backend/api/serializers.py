@@ -20,13 +20,16 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     def validate(self, attrs):
         data = super().validate(attrs)
+        is_butcher = hasattr(self.user, 'butcher_profile')
         # Add extra data to the response
         data['user_id'] = self.user.id
         data['username'] = self.user.username
         data['email'] = self.user.email
         data['first_name'] = self.user.first_name
         data['last_name'] = self.user.last_name
-        data['is_butcher'] = hasattr(self.user, 'butcher_profile')
+        data['is_butcher'] = is_butcher
+        data['butcher_id'] = self.user.butcher_profile.id if is_butcher else None
+        data['is_staff'] = self.user.is_staff
         return data
 
 
@@ -267,8 +270,20 @@ class ButcherSerializer(serializers.ModelSerializer):
     Serializer for Butcher shops.
     """
 
-    rating = serializers.FloatField(read_only=True)
+    rating = serializers.FloatField(read_only=True, allow_null=True)
     total_orders = serializers.IntegerField(read_only=True)
+    active_orders = serializers.SerializerMethodField()
+    is_busy = serializers.SerializerMethodField()
+
+    def get_active_orders(self, obj):
+        # Prefer annotated value from get_queryset if available, else querying count
+        if hasattr(obj, 'live_active_orders'):
+            return obj.live_active_orders
+        return getattr(obj, 'active_orders', 0)
+
+    def get_is_busy(self, obj):
+        # Mark as busy if actively occupied with 3 or more orders or flagged manually
+        return obj.is_busy or self.get_active_orders(obj) >= 3
 
     class Meta:
         model = Butcher
@@ -277,9 +292,9 @@ class ButcherSerializer(serializers.ModelSerializer):
             'description', 'latitude', 'longitude',
             'service_radius_km', 'image_url',
             'opening_time', 'closing_time',
-            'is_available', 'status', 'is_official',
+            'is_available', 'status', 'is_official', 'is_gym_approved',
             'hygiene_score', 'live_stream_url',
-            'rating', 'total_orders'
+            'rating', 'total_orders', 'active_orders', 'is_busy'
         ]
         read_only_fields = ['id', 'status', 'created_at', 'rating', 'total_orders']
 
@@ -296,13 +311,33 @@ class MeatItemSerializer(serializers.ModelSerializer):
     """
     Serializer for inventory items.
     """
-    butcher_name = serializers.CharField(source='butcher.shop_name', read_only=True)
+    butcher_name = serializers.SerializerMethodField()
+    butcher_is_busy = serializers.SerializerMethodField()
+    butcher_lat = serializers.SerializerMethodField()
+    butcher_lng = serializers.SerializerMethodField()
     is_in_stock = serializers.ReadOnlyField()
+
+    def get_butcher_name(self, obj):
+        return obj.butcher.shop_name if obj.butcher else "Unknown Shop"
+
+    def get_butcher_is_busy(self, obj):
+        if not obj.butcher:
+            return False
+        # Fetch annotated live order count or fallback to manual DB flag
+        live_orders = getattr(obj, 'butcher_live_orders', getattr(obj.butcher, 'active_orders', 0))
+        return obj.butcher.is_busy or (live_orders >= 3)
+
+    def get_butcher_lat(self, obj):
+        return obj.butcher.latitude if obj.butcher else None
+
+    def get_butcher_lng(self, obj):
+        return obj.butcher.longitude if obj.butcher else None
     
     class Meta:
         model = MeatItem
         fields = [
-            'id', 'butcher', 'butcher_name', 'name',
+            'id', 'butcher', 'butcher_name', 'butcher_is_busy',
+            'butcher_lat', 'butcher_lng', 'name',
             'description', 'price', 'quantity',
             'category', 'image_url', 'status', 
             'is_in_stock', 'village_source', 'created_at',

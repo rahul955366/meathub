@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { User, CartItem, MeatItem } from '../types';
 import toast from 'react-hot-toast';
 import { registerAuthFailureCallback } from '@/lib/api';
@@ -13,8 +13,9 @@ interface AppContextType {
     setSearchQuery: (query: string) => void;
     addToCart: (item: MeatItem, selectedCut?: string) => void;
     removeFromCart: (id: number, selectedCut?: string) => void;
+    updateQuantity: (id: number, selectedCut: string, delta: number) => void;
     clearCart: () => void;
-    login: (token: string, userData: User) => void;
+    login: (token: string, userData: User, refreshToken?: string) => void;
     logout: () => void;
     isCartOpen: boolean;
     setIsCartOpen: (open: boolean) => void;
@@ -65,12 +66,48 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('meathub_cart', JSON.stringify(cart));
     }, [cart]);
 
-    const login = (newToken: string, userData: User) => {
+    const login = (newToken: string, userData: User, refreshToken?: string) => {
         setToken(newToken);
         setUser(userData);
         localStorage.setItem('meathub_token', newToken);
         localStorage.setItem('meathub_user', JSON.stringify(userData));
+        if (refreshToken) {
+            localStorage.setItem('meathub_refresh', refreshToken);
+        }
     };
+
+    // Auto-refresh token every 20 minutes
+    useEffect(() => {
+        const refreshAccessToken = async () => {
+            const refreshToken = localStorage.getItem('meathub_refresh');
+            if (!refreshToken) return;
+            try {
+                const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+                const res = await fetch(`${API_URL}/api/auth/refresh/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh: refreshToken }),
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setToken(data.access);
+                    localStorage.setItem('meathub_token', data.access);
+                } else {
+                    // Refresh token itself expired — force logout
+                    logout();
+                }
+            } catch (e) {
+                console.warn('Token refresh failed, will retry:', e);
+            }
+        };
+
+        // Refresh immediately on mount if token exists, then every 20 mins
+        const savedToken = localStorage.getItem('meathub_token');
+        if (savedToken) refreshAccessToken();
+        const interval = setInterval(refreshAccessToken, 20 * 60 * 1000);
+        return () => clearInterval(interval);
+    }, []);
+
 
     const logout = () => {
         setToken(null);
@@ -118,6 +155,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setIsCartOpen(true); // Auto-open cart on add
     };
 
+    const updateQuantity = (meatItemId: number, selectedCut: string, delta: number) => {
+        setCart(prev => {
+            const newCart = prev.map(item => {
+                if (item.meat_item_id === meatItemId && item.selectedCut === selectedCut) {
+                    return { ...item, quantity: Math.max(0, item.quantity + delta) };
+                }
+                return item;
+            }).filter(i => i.quantity > 0);
+            return newCart;
+        });
+    };
+
     const removeFromCart = (meatItemId: number, selectedCut?: string) => {
         setCart(prev => {
             if (selectedCut) {
@@ -135,7 +184,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return (
         <AppContext.Provider value={{
             user, cart, searchQuery, token, isCartOpen,
-            setIsCartOpen, setSearchQuery, addToCart, removeFromCart, clearCart,
+            setIsCartOpen, setSearchQuery, addToCart, removeFromCart, updateQuantity, clearCart,
             login, logout, totalAmount, cartCount
         }}>
             {children}

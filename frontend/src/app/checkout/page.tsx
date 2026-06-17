@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '@/context/AppContext';
 import { createOrder, createPaymentOrder, verifyPayment } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,9 +37,11 @@ export default function CheckoutPage() {
     }, []);
 
     const PLANS = {
-        'WEEKLY': { name: 'Artisan Weekly', price: 2400, desc: '4 Deliveries / Month • Sunday Priority' },
-        'MONTHLY': { name: 'Concierge Monthly', price: 8500, desc: 'Daily Drops • Sunday Auto-Dispatch' },
-        'YEARLY': { name: 'Elite Annual', price: 95000, desc: 'Price Protection • 24/7 Concierge' }
+        'WEEKLY': { id: 'WEEKLY', name: 'Artisan Weekly', price: 2400, desc: '4 Deliveries / Month • Sunday Priority' },
+        'MONTHLY': { id: 'MONTHLY', name: 'Concierge Monthly', price: 8500, desc: 'Daily Drops • Sunday Auto-Dispatch' },
+        'YEARLY': { id: 'YEARLY', name: 'Elite Annual', price: 95000, desc: 'Price Protection • 24/7 Concierge' },
+        'gym': { id: 'gym', name: 'Gym/Protein Subscription', price: 1500, desc: 'High Protein Bulk Meat' },
+        'pet': { id: 'pet', name: 'Pet Food Subscription', price: 800, desc: 'Healthy Meats for Pets' }
     };
 
     const currentPlan = subscriptionPlan ? PLANS[subscriptionPlan as keyof typeof PLANS] : null;
@@ -57,6 +59,16 @@ export default function CheckoutPage() {
     const [sundaySpecial, setSundaySpecial] = useState(false);
     const [sundaySlot, setSundaySlot] = useState<'EARLY_MORNING' | 'MORNING' | 'LATE_MORNING'>('EARLY_MORNING');
     const [isProcessing, setIsProcessing] = useState(false);
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined' && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                () => console.warn("GPS Permission denied for checkout mapping.")
+            );
+        }
+    }, []);
 
     const validateStep1 = () => {
         if (!formData.phone || formData.phone.length < 10) {
@@ -102,11 +114,63 @@ export default function CheckoutPage() {
             return;
         }
 
-        if (subscriptionPlan) {
-            // Subscriptions always go to a simulator for now as per user guide logic
-            setTimeout(() => {
-                router.push('/order-success?type=subscription');
-            }, 2000);
+        // --- Sunday Special Cutoff Check ---
+        if (sundaySpecial) {
+            const now = new Date();
+            const day = now.getDay(); // 0=Sun, 6=Sat
+            const hour = now.getHours();
+
+            if (day === 6 && hour >= 12) {
+                setError('Sunday special delivery cutoff was 12 PM Saturday. Orders are now closed for tomorrow.');
+                setIsProcessing(false);
+                return;
+            }
+            if (day === 0) {
+                setError('Sunday special orders must be placed by Saturday 12 PM.');
+                setIsProcessing(false);
+                return;
+            }
+        }
+
+        if (currentPlan) {
+            if (!token) {
+                setError('Login required for subscriptions');
+                setIsProcessing(false);
+                return;
+            }
+            try {
+                const api = await import('@/lib/api');
+                let success = false;
+                if (currentPlan.id === 'gym') {
+                    success = await api.createGymSubscription(token, {
+                        protein_type: 'CHICKEN', // default
+                        weekly_weight_kg: 5,
+                        active: true
+                    } as any);
+                } else if (currentPlan.id === 'pet') {
+                    success = await api.createPetSubscription(token, {
+                        pet_type: 'DOG', // required field in model
+                        weekly_quantity_kg: 3,
+                        active: true
+                    } as any);
+                } else {
+                    success = await api.createSubscription(token, {
+                        plan_name: currentPlan.name,
+                        price: currentPlan.price,
+                        active: true
+                    } as any);
+                }
+
+                if (success) {
+                    router.push('/order-success?type=subscription');
+                } else {
+                    setError('Failed to create subscription in database.');
+                }
+            } catch (e) {
+                setError('Subscription failed. Please try again.');
+            } finally {
+                setIsProcessing(false);
+            }
             return;
         }
 
@@ -150,6 +214,12 @@ export default function CheckoutPage() {
                         name: formData.name,
                         contact: formData.phone
                     },
+                    modal: {
+                        ondismiss: function () {
+                            setError('Payment cancelled or window closed.');
+                            setIsProcessing(false);
+                        }
+                    },
                     theme: { color: "#e11d48" }
                 };
 
@@ -179,6 +249,7 @@ export default function CheckoutPage() {
         let successCount = 0;
         let lastError = '';
         let hasOfficial = false;
+        let firstOrderId = null;
 
         for (const bId of butcherIds) {
             const groupItems = butcherGroups[bId];
@@ -186,9 +257,11 @@ export default function CheckoutPage() {
                 butcher_id: bId,
                 delivery_address: `${formData.address}, ${formData.landmark}, ${formData.city} - ${formData.pincode}`,
                 delivery_phone: formData.phone,
+                user_lat: userLocation?.lat,
+                user_lng: userLocation?.lng,
                 payment_method: formData.paymentMethod,
                 payment_id: pId || undefined,
-                sunday_special: sundaySpecial,
+                sunday_special: sundaySpecial, // backwards compat
                 sunday_slot: sundaySpecial ? sundaySlot : undefined,
                 items: groupItems.map(item => ({
                     meat_item_id: item.meat_item_id,
@@ -199,6 +272,7 @@ export default function CheckoutPage() {
 
             if (result && result.success) {
                 successCount++;
+                if (result.order_id) firstOrderId = result.order_id;
                 if (result.is_official) hasOfficial = true;
             } else {
                 lastError = (result as any)?.error || 'Order placement failed.';
@@ -207,9 +281,9 @@ export default function CheckoutPage() {
 
         if (successCount === butcherIds.length) {
             clearCart();
-            const successUrl = butcherIds.length > 1
-                ? `/order-success?split=${butcherIds.length}&official=${hasOfficial}`
-                : `/order-success?official=${hasOfficial}`;
+            let successUrl = `/order-success?official=${hasOfficial}`;
+            if (butcherIds.length > 1) successUrl += `&split=${butcherIds.length}`;
+            if (firstOrderId) successUrl += `&orderId=${firstOrderId}`;
             router.push(successUrl);
         } else {
             setError(successCount > 0 ? `Partial success (${successCount}/${butcherIds.length}). ${lastError}` : lastError);
@@ -279,7 +353,7 @@ export default function CheckoutPage() {
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => { clearCart(); setError(null); router.push('/butchers'); }}
+                                        onClick={() => { clearCart(); setError(''); const timer = setTimeout(() => setError(''), 5000); router.push('/butchers'); }}
                                         className="h-14 px-8 bg-red-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-700 transition-all shadow-lg active:scale-95 whitespace-nowrap"
                                     >
                                         Reset Bag & Start Fresh

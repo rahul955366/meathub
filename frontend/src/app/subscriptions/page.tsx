@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { useAppContext } from '@/context/AppContext';
 import {
     Calendar,
     Zap,
@@ -16,6 +18,8 @@ import {
 import SubscriptionForm from '../../components/SubscriptionForm';
 
 export default function SubscriptionsPage() {
+    const router = useRouter();
+    const { token } = useAppContext();
     const [selectedPlan, setSelectedPlan] = useState('MONTHLY');
     const [activeSubscriptionType, setActiveSubscriptionType] = useState<'GENERAL' | 'GYM' | 'PET' | null>(null);
 
@@ -47,6 +51,10 @@ export default function SubscriptionsPage() {
     ];
 
     const handleSelectPlan = (planId: string) => {
+        if (!token) {
+            router.push('/login?redirect=/subscriptions');
+            return;
+        }
         setSelectedPlan(planId);
         setActiveSubscriptionType('GENERAL');
     };
@@ -159,7 +167,13 @@ export default function SubscriptionsPage() {
                                     <p className="text-slate-400 text-sm font-medium italic leading-relaxed">Protein-optimized subscriptions tailored for bodybuilding, maintenance, or weight loss.</p>
                                 </div>
                                 <button
-                                    onClick={() => setActiveSubscriptionType('GYM')}
+                                    onClick={() => {
+                                        if (!token) {
+                                            router.push('/login?redirect=/subscriptions');
+                                            return;
+                                        }
+                                        setActiveSubscriptionType('GYM');
+                                    }}
                                     className="h-14 px-8 bg-white text-slate-900 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-500 hover:text-white transition-all shadow-2xl"
                                 >
                                     Activate Gym Cycle
@@ -182,7 +196,13 @@ export default function SubscriptionsPage() {
                                     <p className="text-slate-400 text-sm font-medium italic leading-relaxed">Grade-A raw feeding plans for pets. Science-backed, master butcher prepared.</p>
                                 </div>
                                 <button
-                                    onClick={() => setActiveSubscriptionType('PET')}
+                                    onClick={() => {
+                                        if (!token) {
+                                            router.push('/login?redirect=/subscriptions');
+                                            return;
+                                        }
+                                        setActiveSubscriptionType('PET');
+                                    }}
                                     className="h-14 px-8 bg-white text-slate-900 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-600 hover:text-white transition-all shadow-2xl"
                                 >
                                     Activate Pet Cycle
@@ -239,7 +259,13 @@ export default function SubscriptionsPage() {
                         </h2>
                         <div className="flex justify-center relative z-10">
                             <button
-                                onClick={() => setActiveSubscriptionType('GENERAL')}
+                                onClick={() => {
+                                    if (!token) {
+                                        router.push('/login?redirect=/subscriptions');
+                                        return;
+                                    }
+                                    setActiveSubscriptionType('GENERAL');
+                                }}
                                 className="h-20 px-12 bg-slate-950 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] flex items-center gap-4 hover:scale-105 transition-all shadow-2xl"
                             >
                                 BEGIN YOUR CYCLE <ArrowRight className="w-6 h-6 text-rose-600" />

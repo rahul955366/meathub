@@ -50,10 +50,18 @@ export default function ButcherOrders() {
     // W3/A1: Use the shared api.ts function (now uses PATCH)
     const handleUpdateStatus = async (orderId: number, newStatus: string) => {
         if (!token) return;
+
+        let reason = '';
+        if (newStatus === 'CANCELLED') {
+            const input = window.prompt("Reason for cancellation (e.g., Item out of stock):");
+            if (input === null) return; // Cancelled the prompt
+            reason = input || 'Butcher cancelled the order';
+        }
+
         setUpdating(orderId);
-        const success = await updateOrderStatus(token, orderId, newStatus);
+        const success = await updateOrderStatus(token, orderId, newStatus, reason);
         if (success) {
-            setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+            setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus, cancellation_reason: reason } : o));
             toast.success(`Order #${orderId} → ${newStatus}`);
         } else {
             toast.error('Update failed. Please try again.');
