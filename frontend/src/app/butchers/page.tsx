@@ -7,8 +7,8 @@ import AIChat from '@/components/AIChat';
 export const dynamic = 'force-dynamic';
 
 export default async function ButcherListings() {
-    const butchers = await getButchers();
-    const items = await getMeatItems();
+    const butchers = (await getButchers()) || [];
+    const items = (await getMeatItems()) || [];
 
     return (
         <Suspense fallback={<div className="min-h-screen flex items-center justify-center font-black uppercase tracking-[0.5em] text-slate-400">Loading Artisans...</div>}>

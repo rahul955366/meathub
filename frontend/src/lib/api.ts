@@ -122,12 +122,12 @@ export async function request<T>(endpoint: string, options: RequestInit = {}): P
 
 // ── Public Data Fetching ─────────────────────────────────────
 
-export async function getButchers(): Promise<Butcher[] | null> {
-    return request<Butcher[]>('/butchers/');
+export async function getButchers(): Promise<Butcher[]> {
+    return (await request<Butcher[]>('/butchers/')) ?? [];
 }
 
-export async function getMeatItems(): Promise<MeatItem[] | null> {
-    return request<MeatItem[]>('/items/');
+export async function getMeatItems(): Promise<MeatItem[]> {
+    return (await request<MeatItem[]>('/items/')) ?? [];
 }
 
 export async function getVillageSources(): Promise<VillageSource[] | null> {

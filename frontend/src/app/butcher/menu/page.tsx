@@ -21,7 +21,7 @@ export default function ButcherMenuManager() {
                 // Filter for this butcher's items (using user.butcher_id if available)
                 // Note: api.ts fetchButcherItems doesn't exist yet, we use getMeatItems + filter
                 const butcherId = (user as any)?.butcher_id;
-                const mine = all.filter((i: MeatItem) => i.butcher === butcherId);
+                const mine = all ? all.filter((i: MeatItem) => i.butcher === butcherId) : [];
                 setItems(mine);
             } catch { toast.error('Failed to load menu items'); }
             setLoading(false);

@@ -78,7 +78,7 @@ export default function ShopsForItem({ itemName, categoryName, items, butchers }
 
             return {
                 item,
-                butcher: butcher || {
+                butcher: (butcher || {
                     id: item.butcher,
                     shop_name: item.butcher_name,
                     address: "Hyderabad",
@@ -88,7 +88,7 @@ export default function ShopsForItem({ itemName, categoryName, items, butchers }
                     is_available: true,
                     is_official: false,
                     status: 'APPROVED',
-                },
+                }) as Butcher,
                 distance,
                 rating,
                 deliveryTime,
