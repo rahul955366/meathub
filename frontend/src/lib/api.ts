@@ -40,8 +40,8 @@ export interface OfficialItem {
 
 const isServer = typeof window === 'undefined';
 const API_URL = isServer
-    ? (process.env.INTERNAL_API_URL || 'http://127.0.0.1:8000')
-    : (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000');
+    ? (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000')
+    : '/api/proxy'; // Client always uses the local Next.js proxy — no build-time URL needed
 
 // ── Auth Failure Interceptor ─────────────────────────────────
 type AuthFailureCallback = () => void;
@@ -53,7 +53,10 @@ export function registerAuthFailureCallback(callback: AuthFailureCallback) {
 
 export async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T | null> {
     try {
-        const url = `${API_URL}/api${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+        const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+        const url = isServer
+            ? `${API_URL}/api${cleanEndpoint}`
+            : `${API_URL}${cleanEndpoint}`; // proxy path: /api/proxy/butchers/ → maps to backend /api/butchers/
         const res = await fetch(url, {
             ...options,
             headers: {
