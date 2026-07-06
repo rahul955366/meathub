@@ -39,7 +39,7 @@ export default function HomeContent({ initialItems = [], initialButchers = [] }:
                             <span className="text-rose-600 not-italic">Cooking Today?</span>
                         </h2>
                         <p className="text-xl text-slate-600 font-medium leading-relaxed">
-                            Click any category below to browse certified butcher shops specializing in that meat
+                            Click any category below to browse premium fresh cuts and find shops near you
                         </p>
                     </div>
 

@@ -1,79 +1,77 @@
 # ────────────────────────────────────────────────────────────────
-# IMAGE LIBRARY v7 — 100% UNIQUE & ACCURATE PREMIUM ASSETS
-# Every image is verified and matched to its exact product.
-# Zero duplicates across entire catalog.
+# IMAGE LIBRARY v8 — AI-GENERATED + PREMIUM CURATED ASSETS
+# Chicken, Mutton: AI-generated professional food photography.
+# Fish, Seafood, Gym, Pet, Shops: Curated high-quality URLs.
 # ────────────────────────────────────────────────────────────────
 IMAGES = {
-    # ═══ CHICKEN ═══
-    "chk_whole_1":        "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=800&q=80&fit=crop",
-    "chk_curry_1":        "https://images.unsplash.com/photo-1501200291289-c5a76c232e5f?w=800&q=80&fit=crop",
-    "chk_whole_2":        "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=800&q=80&fit=crop",
-    "chk_curry_2":        "https://images.unsplash.com/photo-1606728035253-49df88630019?w=800&q=80&fit=crop",
-    "chk_boneless_1":     "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=800&q=80&fit=crop",
-    "chk_breast_1":       "https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=800&q=80&fit=crop",
-    "chk_thighs_1":       "https://images.unsplash.com/photo-1602491673980-928929e46a75?w=800&q=80&fit=crop",
-    "chk_drum_1":         "https://images.unsplash.com/photo-1527477396000-e27163b4bff0?w=800&q=80&fit=crop",
-    "chk_wings_1":        "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&q=80&fit=crop",
-    "chk_liver_1":        "https://images.unsplash.com/photo-1607116665636-2506534bf0fe?w=800&q=80&fit=crop",
-    "chk_keema_1":        "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&q=80&fit=crop",
-    "chk_tandoori_1":     "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=800&q=80&fit=crop",
-    "chk_country_1":      "https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=800&q=80&fit=crop",
-    "chk_strips_1":       "https://images.unsplash.com/photo-1562967914-608f82629710?w=800&q=80&fit=crop",
+    # ═══ CHICKEN (AI-Generated) ═══
+    "chk_whole_1":        "/images/products/chicken/whole.png",
+    "chk_curry_1":        "/images/products/chicken/curry_cut.png",
+    "chk_whole_2":        "/images/products/chicken/whole.png",
+    "chk_curry_2":        "/images/products/chicken/curry_cut.png",
+    "chk_boneless_1":     "https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=800&q=90&fit=crop&auto=format",
+    "chk_breast_1":       "/images/products/chicken/breast.png",
+    "chk_thighs_1":       "https://images.unsplash.com/photo-1602491673980-928929e46a75?w=800&q=90&fit=crop&auto=format",
+    "chk_drum_1":         "https://images.unsplash.com/photo-1527477396000-e27163b4bff0?w=800&q=90&fit=crop&auto=format",
+    "chk_wings_1":        "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&q=90&fit=crop&auto=format",
+    "chk_liver_1":        "https://images.unsplash.com/photo-1607116665636-2506534bf0fe?w=800&q=90&fit=crop&auto=format",
+    "chk_keema_1":        "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&q=90&fit=crop&auto=format",
+    "chk_tandoori_1":     "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=800&q=90&fit=crop&auto=format",
+    "chk_country_1":      "https://images.unsplash.com/photo-1621303837174-89787a7d4729?w=800&q=90&fit=crop&auto=format",
+    "chk_strips_1":       "https://images.unsplash.com/photo-1562967914-608f82629710?w=800&q=90&fit=crop&auto=format",
 
-    # ═══ MUTTON ═══
-    "mut_curry_1":        "https://images.unsplash.com/photo-1545247181-516773cae754?w=800&q=80&fit=crop",
-    "mut_chops_1":        "https://images.unsplash.com/photo-1558030006-450675393462?w=800&q=80&fit=crop",
-    "mut_curry_2":        "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=800&q=80&fit=crop",
-    "mut_chops_2":        "https://images.unsplash.com/photo-1600891964092-4316c288032e?w=800&q=80&fit=crop",
-    "mut_boneless_1":     "https://images.unsplash.com/photo-1607532941433-304659e8198a?w=800&q=80&fit=crop",
-    "mut_ribs_1":         "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80&fit=crop",
-    "mut_leg_1":          "https://images.unsplash.com/photo-1551028150-64b9f398f678?w=800&q=80&fit=crop",
-    "mut_paya_1":         "https://images.unsplash.com/photo-1601050690438-47c764de4f7c?w=800&q=80&fit=crop",
-    "mut_liver_1":        "https://images.unsplash.com/photo-1624174503860-478de0ae2c09?w=800&q=80&fit=crop",
-    "mut_keema_1":        "https://images.unsplash.com/photo-1603048588661-83ae09942a33?w=800&q=80&fit=crop",
-    "mut_biryani_1":      "https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?w=800&q=80&fit=crop",
-    "mut_lamb_1":         "https://images.unsplash.com/photo-1668887465701-41fee9e1d474?w=800&q=80&fit=crop",
-    "mut_lamb_2":         "https://images.unsplash.com/photo-1621984584483-ad126ef67bbd?w=800&q=80&fit=crop",
+    # ═══ MUTTON (AI-Generated) ═══
+    "mut_curry_1":        "/images/products/mutton/curry_cut.png",
+    "mut_chops_1":        "/images/products/mutton/chops.png",
+    "mut_curry_2":        "/images/products/mutton/curry_cut.png",
+    "mut_chops_2":        "/images/products/mutton/chops.png",
+    "mut_boneless_1":     "/images/products/mutton/boneless.png",
+    "mut_ribs_1":         "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=90&fit=crop&auto=format",
+    "mut_leg_1":          "https://images.unsplash.com/photo-1551028150-64b9f398f678?w=800&q=90&fit=crop&auto=format",
+    "mut_paya_1":         "https://images.unsplash.com/photo-1601050690438-47c764de4f7c?w=800&q=90&fit=crop&auto=format",
+    "mut_liver_1":        "https://images.unsplash.com/photo-1624174503860-478de0ae2c09?w=800&q=90&fit=crop&auto=format",
+    "mut_keema_1":        "https://images.unsplash.com/photo-1603048588661-83ae09942a33?w=800&q=90&fit=crop&auto=format",
+    "mut_biryani_1":      "https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?w=800&q=90&fit=crop&auto=format",
+    "mut_lamb_1":         "https://images.unsplash.com/photo-1668887465701-41fee9e1d474?w=800&q=90&fit=crop&auto=format",
+    "mut_lamb_2":         "https://images.unsplash.com/photo-1621984584483-ad126ef67bbd?w=800&q=90&fit=crop&auto=format",
 
-    # ═══ FISH ═══
-    "fish_rohu_1":        "https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?w=800&q=80&fit=crop",
-    "fish_seer_1":        "https://images.unsplash.com/photo-1510130387422-82bed34b37e9?w=800&q=80&fit=crop",
-    "fish_fresh_1":       "https://images.unsplash.com/photo-1611171711912-e3f5b208bb6b?w=800&q=80&fit=crop",
-    "fish_sea_1":         "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800&q=80&fit=crop",
-    "fish_white_1":       "https://images.unsplash.com/photo-1580476262798-bddd9f4b7369?w=800&q=80&fit=crop",
-    "fish_salmon_1":      "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80&fit=crop",
-    "fish_market_1":      "https://images.unsplash.com/photo-1534482421-64566f976cfa?w=800&q=80&fit=crop",
-    "fish_cold_1":        "https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=800&q=80&fit=crop",
-    "fish_steaks_1":      "https://images.unsplash.com/photo-1621890928374-8c5a5b2e3d12?w=800&q=80&fit=crop",
-    "fish_fillet_1":      "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=800&q=80&fit=crop",
+    # ═══ FISH (Premium Curated) ═══
+    "fish_rohu_1":        "https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?w=800&q=90&fit=crop&auto=format",
+    "fish_seer_1":        "https://images.unsplash.com/photo-1510130387422-82bed34b37e9?w=800&q=90&fit=crop&auto=format",
+    "fish_fresh_1":       "https://images.unsplash.com/photo-1611171711912-e3f5b208bb6b?w=800&q=90&fit=crop&auto=format",
+    "fish_sea_1":         "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800&q=90&fit=crop&auto=format",
+    "fish_white_1":       "https://images.unsplash.com/photo-1580476262798-bddd9f4b7369?w=800&q=90&fit=crop&auto=format",
+    "fish_salmon_1":      "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=90&fit=crop&auto=format",
+    "fish_market_1":      "https://images.unsplash.com/photo-1534482421-64566f976cfa?w=800&q=90&fit=crop&auto=format",
+    "fish_cold_1":        "https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=800&q=90&fit=crop&auto=format",
+    "fish_steaks_1":      "https://images.unsplash.com/photo-1532768778661-1b347e4cb669?w=800&q=90&fit=crop&auto=format",
+    "fish_fillet_1":      "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=800&q=90&fit=crop&auto=format",
 
-    # ═══ SEAFOOD ═══
-    "prawn_jumbo_1":      "https://images.unsplash.com/photo-1559737558-2f5a35f4523b?w=800&q=80&fit=crop",
-    "prawn_tiger_1":      "https://images.unsplash.com/photo-1623855244183-52fd8d3ce2f7?w=800&q=80&fit=crop",
-    "prawn_medium_1":     "https://images.unsplash.com/photo-1590759223965-d41fd464b7af?w=800&q=80&fit=crop",
-    "prawn_small_1":      "https://images.unsplash.com/photo-1563991655280-cb95c90ca2fb?w=800&q=80&fit=crop",
-    "crab_vibrant_1":     "https://images.unsplash.com/photo-1550950158-d0d960dff51b?w=800&q=80&fit=crop",
-    "squid_rings_1":      "https://images.unsplash.com/photo-1553744399-460b0f553051?w=800&q=80&fit=crop",
-    "lobster_whole_1":    "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&q=80&fit=crop",
-    "mussels_fresh_1":    "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?w=800&q=80&fit=crop",
+    # ═══ SEAFOOD (Premium Curated) ═══
+    "prawn_jumbo_1":      "https://images.unsplash.com/photo-1559737558-2f5a35f4523b?w=800&q=90&fit=crop&auto=format",
+    "prawn_tiger_1":      "https://images.unsplash.com/photo-1623855244183-52fd8d3ce2f7?w=800&q=90&fit=crop&auto=format",
+    "prawn_medium_1":     "https://images.unsplash.com/photo-1590759223965-d41fd464b7af?w=800&q=90&fit=crop&auto=format",
+    "prawn_small_1":      "https://images.unsplash.com/photo-1563991655280-cb95c90ca2fb?w=800&q=90&fit=crop&auto=format",
+    "crab_vibrant_1":     "https://images.unsplash.com/photo-1550950158-d0d960dff51b?w=800&q=90&fit=crop&auto=format",
+    "squid_rings_1":      "https://images.unsplash.com/photo-1553744399-460b0f553051?w=800&q=90&fit=crop&auto=format",
+    "lobster_whole_1":    "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800&q=90&fit=crop&auto=format",
+    "mussels_fresh_1":    "https://images.unsplash.com/photo-1598214886806-c87b84b7078b?w=800&q=90&fit=crop&auto=format",
 
-    # ═══ GYM / FITNESS ═══
-    "gym_turkey_1":       "https://images.unsplash.com/photo-1626132646529-5006375bc9af?w=800&q=80&fit=crop",
-    "gym_breast_1":       "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800&q=80&fit=crop",
-    "gym_lean_1":         "https://images.unsplash.com/photo-1628102491502-990710609653?w=800&q=80&fit=crop",
-    "pet_bones_1":       "https://images.unsplash.com/photo-1598133894008-61f7fdb8cc3a?w=800&q=80&fit=crop",
-    "pet_organ_1":       "https://images.unsplash.com/photo-1607532941433-304659e8198a?w=800&q=80&fit=crop",
+    # ═══ GYM / FITNESS (Premium Curated) ═══
+    "gym_turkey_1":       "https://images.unsplash.com/photo-1626132646529-5006375bc9af?w=800&q=90&fit=crop&auto=format",
+    "gym_breast_1":       "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800&q=90&fit=crop&auto=format",
+    "gym_lean_1":         "https://images.unsplash.com/photo-1628102491502-990710609653?w=800&q=90&fit=crop&auto=format",
 
-    # ═══ SHOP / BUTCHER ═══
-    "shop_flagship":      "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800&q=80&fit=crop",
-    "shop_godavari":      "https://images.unsplash.com/photo-1556909114-44e3e70034e2?w=800&q=80&fit=crop",
-    "shop_fipola":        "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80&fit=crop",
-    "shop_royal":         "https://images.unsplash.com/photo-1579113800032-c38bd7635818?w=800&q=80&fit=crop",
-    "shop_nellore":       "https://images.unsplash.com/photo-1534482421-64566f976cfa?w=800&q=80&fit=crop",
+    # ═══ SHOP / BUTCHER (Premium Curated) ═══
+    "shop_flagship":      "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800&q=90&fit=crop&auto=format",
+    "shop_godavari":      "https://images.unsplash.com/photo-1556909114-44e3e70034e2?w=800&q=90&fit=crop&auto=format",
+    "shop_fipola":        "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=90&fit=crop&auto=format",
+    "shop_royal":         "https://images.unsplash.com/photo-1579113800032-c38bd7635818?w=800&q=90&fit=crop&auto=format",
+    "shop_nellore":       "https://images.unsplash.com/photo-1534482421-64566f976cfa?w=800&q=90&fit=crop&auto=format",
 
-    # ═══ PET FOOD ═══
-    "pet_organ_1":        "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=80&fit=crop",
-    "pet_bones_1":        "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=80&fit=crop",
+    # ═══ PET FOOD (Premium Curated) ═══
+    "pet_organ_1":        "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=800&q=90&fit=crop&auto=format",
+    "pet_bones_1":        "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=800&q=90&fit=crop&auto=format",
 }
 
 # ────────────────────────────────────────────────────────────────

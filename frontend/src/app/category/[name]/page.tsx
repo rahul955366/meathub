@@ -1,5 +1,5 @@
 import { getMeatItems } from '@/lib/api';
-import ProductList from '@/components/ProductList';
+import CategoryItemList from '@/components/CategoryItemList';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { MeatItem } from '@/types';
@@ -43,14 +43,14 @@ export default async function CategoryDetails({ params }: { params: Promise<{ na
                             </h1>
                         </div>
                         <div className="max-w-xs text-right">
-                            <p className="text-slate-500 font-bold italic uppercase tracking-widest text-sm mb-2">Available Inventory</p>
+                            <p className="text-slate-500 font-bold italic uppercase tracking-widest text-sm mb-2">Available Cuts</p>
                             <p className="text-3xl font-black text-slate-900">{categoryItems.length} Premium Cuts</p>
                         </div>
                     </div>
 
                     {categoryItems.length > 0 ? (
                         <div className="py-12">
-                            <ProductList initialItems={categoryItems} />
+                            <CategoryItemList initialItems={categoryItems} categoryName={name} />
                         </div>
                     ) : (
                         <div className="py-40 text-center space-y-6">
